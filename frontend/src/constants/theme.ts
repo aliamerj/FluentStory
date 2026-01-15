@@ -1,33 +1,54 @@
+// Swiss Brutalist Design System for FluentStory
+// Inspired by industrial, bold, minimal aesthetics
+
 export const COLORS = {
-  primary: '#6366f1',
-  primaryDark: '#4f46e5',
-  primaryLight: '#818cf8',
-  secondary: '#f472b6',
-  accent: '#22d3ee',
+  // Core colors - High contrast black & white
+  black: '#050505',
+  white: '#FFFFFF',
   
-  success: '#22c55e',
-  warning: '#f59e0b',
-  error: '#ef4444',
+  // Primary palette
+  primary: '#050505',
+  primaryForeground: '#FFFFFF',
   
-  background: '#0f172a',
-  backgroundSecondary: '#1e293b',
-  backgroundTertiary: '#334155',
+  // Accent - Bold orange
+  accent: '#FF4500',
+  accentLight: '#FF6B35',
+  accentForeground: '#FFFFFF',
   
-  surface: '#1e293b',
-  surfaceLight: '#334155',
+  // Backgrounds
+  background: '#FFFFFF',
+  backgroundDark: '#F8F8F8',
+  backgroundAlt: '#F3F4F6',
   
-  text: '#f8fafc',
-  textSecondary: '#94a3b8',
-  textMuted: '#64748b',
+  // Surface colors
+  surface: '#FFFFFF',
+  surfaceElevated: '#FAFAFA',
   
-  border: '#334155',
-  borderLight: '#475569',
+  // Text
+  text: '#050505',
+  textSecondary: '#404040',
+  textMuted: '#6B7280',
+  textLight: '#9CA3AF',
   
-  white: '#ffffff',
-  black: '#000000',
+  // Borders
+  border: '#050505',
+  borderLight: '#E5E7EB',
+  borderMuted: '#D1D5DB',
   
-  savedWord: '#7c3aed20',
-  savedWordBorder: '#7c3aed',
+  // Status colors
+  success: '#00C853',
+  successLight: '#E8F5E9',
+  warning: '#FFB800',
+  warningLight: '#FFF8E1',
+  error: '#FF3D00',
+  errorLight: '#FFEBEE',
+  
+  // Special
+  saved: '#FF450020',
+  savedBorder: '#FF4500',
+  
+  // Streak/Fire
+  streak: '#FF4500',
 };
 
 export const SPACING = {
@@ -37,23 +58,58 @@ export const SPACING = {
   lg: 24,
   xl: 32,
   xxl: 48,
+  xxxl: 64,
 };
 
 export const FONT_SIZES = {
-  xs: 12,
-  sm: 14,
-  md: 16,
-  lg: 18,
+  xs: 11,
+  sm: 13,
+  md: 15,
+  lg: 17,
   xl: 20,
   xxl: 24,
   xxxl: 32,
   title: 40,
+  hero: 48,
+};
+
+export const FONTS = {
+  regular: 'System',
+  medium: 'System',
+  bold: 'System',
+  mono: 'monospace',
 };
 
 export const BORDER_RADIUS = {
-  sm: 8,
-  md: 12,
-  lg: 16,
-  xl: 24,
-  full: 9999,
+  none: 0,
+  sm: 0,
+  md: 0,
+  lg: 0,
+  xl: 0,
+  full: 0,
+};
+
+export const SHADOWS = {
+  none: {},
+  sm: {
+    shadowColor: '#050505',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 2,
+  },
+  md: {
+    shadowColor: '#050505',
+    shadowOffset: { width: 4, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 4,
+  },
+  lg: {
+    shadowColor: '#050505',
+    shadowOffset: { width: 6, height: 6 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 6,
+  },
 };
