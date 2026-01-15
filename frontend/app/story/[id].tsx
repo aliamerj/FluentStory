@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -11,11 +11,11 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import * as Speech from 'expo-speech';
+import { Audio } from 'expo-av';
 import { useAuthStore } from '../../src/store/authStore';
-import { storyApi, wordApi } from '../../src/services/api';
+import { storyApi, wordApi, ttsApi } from '../../src/services/api';
 import { WordModal } from '../../src/components/WordModal';
-import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS } from '../../src/constants/theme';
+import { COLORS, SPACING, FONT_SIZES, SHADOWS } from '../../src/constants/theme';
 
 interface Story {
   id: string;
@@ -40,7 +40,8 @@ export default function StoryScreen() {
   const [savedWords, setSavedWords] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [playbackSpeed, setPlaybackSpeed] = useState(1.0);
+  const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
+  const [sound, setSound] = useState<Audio.Sound | null>(null);
 
   // Word modal state
   const [selectedWord, setSelectedWord] = useState<string | null>(null);
@@ -48,8 +49,6 @@ export default function StoryScreen() {
   const [translation, setTranslation] = useState<string | null>(null);
   const [isTranslating, setIsTranslating] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
-
-  const speedOptions = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0];
 
   const loadStory = async () => {
     if (!id || !user) return;
@@ -75,31 +74,50 @@ export default function StoryScreen() {
     loadStory();
     
     return () => {
-      Speech.stop();
+      if (sound) {
+        sound.unloadAsync();
+      }
     };
   }, [id, user]);
 
   const handlePlayPause = async () => {
     if (!story) return;
 
-    if (isPlaying) {
-      await Speech.stop();
+    if (isPlaying && sound) {
+      await sound.pauseAsync();
       setIsPlaying(false);
-    } else {
-      setIsPlaying(true);
-      await Speech.speak(story.content, {
-        language: story.language.toLowerCase().substring(0, 2),
-        rate: playbackSpeed,
-        onDone: () => setIsPlaying(false),
-        onError: () => setIsPlaying(false),
-      });
+      return;
     }
-  };
 
-  const handleSpeedChange = () => {
-    const currentIndex = speedOptions.indexOf(playbackSpeed);
-    const nextIndex = (currentIndex + 1) % speedOptions.length;
-    setPlaybackSpeed(speedOptions[nextIndex]);
+    if (sound) {
+      await sound.playAsync();
+      setIsPlaying(true);
+      return;
+    }
+
+    // Generate AI speech
+    setIsGeneratingAudio(true);
+    try {
+      const response = await ttsApi.generate(story.content, 'nova', 0.9);
+      const audioBase64 = response.data.audio_base64;
+      
+      const { sound: newSound } = await Audio.Sound.createAsync(
+        { uri: `data:audio/mp3;base64,${audioBase64}` },
+        { shouldPlay: true }
+      );
+      setSound(newSound);
+      setIsPlaying(true);
+      
+      newSound.setOnPlaybackStatusUpdate((status) => {
+        if (status.isLoaded && status.didJustFinish) {
+          setIsPlaying(false);
+        }
+      });
+    } catch (error) {
+      console.error('TTS error:', error);
+    } finally {
+      setIsGeneratingAudio(false);
+    }
   };
 
   const handleWordPress = async (word: string, sentence: string) => {
@@ -148,8 +166,6 @@ export default function StoryScreen() {
   };
 
   const handleRemoveWord = async () => {
-    // For simplicity, just close the modal
-    // In a full implementation, you'd find the word ID and delete it
     setModalVisible(false);
   };
 
@@ -192,7 +208,6 @@ export default function StoryScreen() {
   const renderContent = () => {
     if (!story) return null;
 
-    // Split content into sentences, then words
     const sentences = story.content.split(/(?<=[.!?])\s+/);
     
     return sentences.map((sentence, sentenceIndex) => {
@@ -208,8 +223,8 @@ export default function StoryScreen() {
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
-        <Text style={styles.loadingText}>Loading story...</Text>
+        <ActivityIndicator size="large" color={COLORS.black} />
+        <Text style={styles.loadingText}>LOADING STORY...</Text>
       </View>
     );
   }
@@ -218,9 +233,9 @@ export default function StoryScreen() {
     return (
       <View style={styles.errorContainer}>
         <Ionicons name="alert-circle" size={48} color={COLORS.error} />
-        <Text style={styles.errorText}>Story not found</Text>
+        <Text style={styles.errorText}>STORY NOT FOUND</Text>
         <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.backLink}>Go back</Text>
+          <Text style={styles.backLink}>GO BACK</Text>
         </TouchableOpacity>
       </View>
     );
@@ -231,38 +246,53 @@ export default function StoryScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.headerButton}>
-          <Ionicons name="arrow-back" size={24} color={COLORS.text} />
+          <Ionicons name="arrow-back" size={24} color={COLORS.black} />
         </TouchableOpacity>
         <View style={styles.headerInfo}>
           <Text style={styles.headerTitle} numberOfLines={1}>
             {story.title}
           </Text>
           <Text style={styles.headerMeta}>
-            {story.language} • {story.level}
+            {story.language.toUpperCase()} / {story.level.toUpperCase()}
           </Text>
         </View>
         <TouchableOpacity onPress={handleShare} style={styles.headerButton}>
-          <Ionicons name="share-outline" size={24} color={COLORS.text} />
+          <Ionicons name="share-outline" size={24} color={COLORS.black} />
         </TouchableOpacity>
       </View>
 
       {/* Audio Controls */}
       <View style={styles.audioControls}>
-        <TouchableOpacity onPress={handlePlayPause} style={styles.playButton}>
-          <Ionicons
-            name={isPlaying ? 'pause' : 'play'}
-            size={24}
-            color={COLORS.white}
-          />
+        <TouchableOpacity 
+          onPress={handlePlayPause} 
+          style={styles.playButton}
+          disabled={isGeneratingAudio}
+        >
+          {isGeneratingAudio ? (
+            <ActivityIndicator size="small" color={COLORS.white} />
+          ) : (
+            <Ionicons
+              name={isPlaying ? 'pause' : 'play'}
+              size={28}
+              color={COLORS.white}
+            />
+          )}
         </TouchableOpacity>
         <View style={styles.audioInfo}>
-          <Text style={styles.audioText}>
-            {isPlaying ? 'Playing...' : 'Tap to listen'}
+          <Text style={styles.audioTitle}>
+            {isGeneratingAudio ? 'GENERATING AI VOICE...' : isPlaying ? 'NOW PLAYING' : 'AI VOICE'}
           </Text>
+          <Text style={styles.audioSubtitle}>NATURAL SPEECH</Text>
         </View>
-        <TouchableOpacity onPress={handleSpeedChange} style={styles.speedButton}>
-          <Text style={styles.speedText}>{playbackSpeed}x</Text>
-        </TouchableOpacity>
+        <View style={styles.voiceBadge}>
+          <Text style={styles.voiceText}>NOVA</Text>
+        </View>
+      </View>
+
+      {/* Instruction */}
+      <View style={styles.instructionBar}>
+        <Ionicons name="finger-print" size={16} color={COLORS.accent} />
+        <Text style={styles.instructionText}>TAP ANY WORD TO TRANSLATE</Text>
       </View>
 
       {/* Story Content */}
@@ -270,9 +300,6 @@ export default function StoryScreen() {
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.helpText}>
-          Tap any word to see translation
-        </Text>
         <View style={styles.storyContent}>
           {renderContent()}
         </View>
@@ -308,8 +335,10 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: SPACING.md,
-    fontSize: FONT_SIZES.md,
+    fontSize: FONT_SIZES.sm,
     color: COLORS.textSecondary,
+    fontWeight: '700',
+    letterSpacing: 2,
   },
   errorContainer: {
     flex: 1,
@@ -320,21 +349,26 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: FONT_SIZES.lg,
-    color: COLORS.text,
+    fontWeight: '900',
+    color: COLORS.black,
     marginTop: SPACING.md,
+    letterSpacing: 2,
   },
   backLink: {
-    fontSize: FONT_SIZES.md,
-    color: COLORS.primary,
+    fontSize: FONT_SIZES.sm,
+    color: COLORS.accent,
     marginTop: SPACING.md,
+    fontWeight: '700',
+    letterSpacing: 1,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: SPACING.sm,
     paddingVertical: SPACING.md,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    borderBottomWidth: 3,
+    borderBottomColor: COLORS.black,
+    backgroundColor: COLORS.white,
   },
   headerButton: {
     width: 44,
@@ -348,63 +382,83 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: FONT_SIZES.md,
-    fontWeight: '600',
-    color: COLORS.text,
+    fontWeight: '900',
+    color: COLORS.black,
+    letterSpacing: 1,
   },
   headerMeta: {
     fontSize: FONT_SIZES.xs,
     color: COLORS.textSecondary,
     marginTop: 2,
+    fontWeight: '600',
+    letterSpacing: 1,
   },
   audioControls: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.surface,
+    backgroundColor: COLORS.black,
     padding: SPACING.md,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
     gap: SPACING.md,
   },
   playButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: COLORS.primary,
+    width: 56,
+    height: 56,
+    backgroundColor: COLORS.accent,
     justifyContent: 'center',
     alignItems: 'center',
   },
   audioInfo: {
     flex: 1,
   },
-  audioText: {
+  audioTitle: {
     fontSize: FONT_SIZES.sm,
-    color: COLORS.textSecondary,
+    fontWeight: '700',
+    color: COLORS.white,
+    letterSpacing: 1,
   },
-  speedButton: {
-    backgroundColor: COLORS.backgroundSecondary,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    borderRadius: BORDER_RADIUS.md,
-  },
-  speedText: {
-    fontSize: FONT_SIZES.sm,
+  audioSubtitle: {
+    fontSize: FONT_SIZES.xs,
+    color: COLORS.textLight,
     fontWeight: '600',
-    color: COLORS.primary,
+    letterSpacing: 1,
+  },
+  voiceBadge: {
+    backgroundColor: COLORS.accent,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+  },
+  voiceText: {
+    fontSize: FONT_SIZES.xs,
+    fontWeight: '700',
+    color: COLORS.white,
+    letterSpacing: 1,
+  },
+  instructionBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.sm,
+    paddingVertical: SPACING.sm,
+    backgroundColor: COLORS.backgroundAlt,
+    borderBottomWidth: 2,
+    borderBottomColor: COLORS.borderLight,
+  },
+  instructionText: {
+    fontSize: FONT_SIZES.xs,
+    color: COLORS.textSecondary,
+    fontWeight: '700',
+    letterSpacing: 1,
   },
   contentContainer: {
     padding: SPACING.lg,
     paddingBottom: SPACING.xxl,
   },
-  helpText: {
-    fontSize: FONT_SIZES.sm,
-    color: COLORS.textMuted,
-    textAlign: 'center',
-    marginBottom: SPACING.lg,
-  },
   storyContent: {
-    backgroundColor: COLORS.surface,
-    borderRadius: BORDER_RADIUS.lg,
+    backgroundColor: COLORS.white,
     padding: SPACING.lg,
+    borderWidth: 2,
+    borderColor: COLORS.black,
+    ...SHADOWS.sm,
   },
   sentenceContainer: {
     flexDirection: 'row',
@@ -414,14 +468,14 @@ const styles = StyleSheet.create({
   word: {
     fontSize: FONT_SIZES.lg,
     lineHeight: 32,
-    color: COLORS.text,
+    color: COLORS.black,
   },
   savedWord: {
-    backgroundColor: COLORS.savedWord,
-    borderRadius: 4,
-    overflow: 'hidden',
+    backgroundColor: COLORS.saved,
+    borderBottomWidth: 2,
+    borderBottomColor: COLORS.accent,
   },
   punctuation: {
-    color: COLORS.text,
+    color: COLORS.black,
   },
 });

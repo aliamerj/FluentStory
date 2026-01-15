@@ -11,11 +11,10 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import * as Speech from 'expo-speech';
+import { Audio } from 'expo-av';
 import { useAuthStore } from '../../src/store/authStore';
-import { wordApi } from '../../src/services/api';
-import { Card } from '../../src/components/Card';
-import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS } from '../../src/constants/theme';
+import { wordApi, ttsApi } from '../../src/services/api';
+import { COLORS, SPACING, FONT_SIZES, SHADOWS } from '../../src/constants/theme';
 import { format, parseISO } from 'date-fns';
 
 interface Word {
@@ -43,6 +42,7 @@ export default function DictionaryScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'learning' | 'mastered'>('all');
+  const [playingWordId, setPlayingWordId] = useState<string | null>(null);
 
   const loadWords = async () => {
     if (!user) return;
@@ -69,7 +69,6 @@ export default function DictionaryScreen() {
   }, [user, filterType]);
 
   useEffect(() => {
-    // Filter words by search query
     if (searchQuery) {
       const filtered = words.filter(
         (word) =>
@@ -83,7 +82,6 @@ export default function DictionaryScreen() {
   }, [searchQuery, words]);
 
   useEffect(() => {
-    // Group words by date
     const grouped: { [key: string]: Word[] } = {};
     filteredWords.forEach((word) => {
       const dateKey = word.date_saved;
@@ -96,21 +94,35 @@ export default function DictionaryScreen() {
     const sectionData: Section[] = Object.keys(grouped)
       .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
       .map((date) => ({
-        title: format(parseISO(date), 'EEEE, MMMM d, yyyy'),
+        title: format(parseISO(date), 'EEEE, MMMM d, yyyy').toUpperCase(),
         data: grouped[date],
       }));
 
     setSections(sectionData);
   }, [filteredWords]);
 
-  const handleSpeak = async (word: string) => {
+  const handleSpeak = async (word: Word) => {
+    if (playingWordId === word.id) return;
+    
+    setPlayingWordId(word.id);
     try {
-      await Speech.speak(word, {
-        language: user?.target_language?.toLowerCase().substring(0, 2) || 'es',
-        rate: 0.8,
+      const response = await ttsApi.generate(word.word, 'nova', 0.85);
+      const audioBase64 = response.data.audio_base64;
+      
+      const { sound } = await Audio.Sound.createAsync(
+        { uri: `data:audio/mp3;base64,${audioBase64}` },
+        { shouldPlay: true }
+      );
+      
+      sound.setOnPlaybackStatusUpdate((status) => {
+        if (status.isLoaded && status.didJustFinish) {
+          setPlayingWordId(null);
+          sound.unloadAsync();
+        }
       });
     } catch (error) {
-      console.error('Speech error:', error);
+      console.error('TTS error:', error);
+      setPlayingWordId(null);
     }
   };
 
@@ -133,9 +145,17 @@ export default function DictionaryScreen() {
     <View style={styles.wordCard}>
       <View style={styles.wordHeader}>
         <View style={styles.wordMain}>
-          <Text style={styles.wordText}>{item.word}</Text>
-          <TouchableOpacity onPress={() => handleSpeak(item.word)} style={styles.speakButton}>
-            <Ionicons name="volume-high" size={18} color={COLORS.primary} />
+          <Text style={styles.wordText}>{item.word.toUpperCase()}</Text>
+          <TouchableOpacity 
+            onPress={() => handleSpeak(item)} 
+            style={styles.speakButton}
+            disabled={playingWordId === item.id}
+          >
+            {playingWordId === item.id ? (
+              <ActivityIndicator size="small" color={COLORS.white} />
+            ) : (
+              <Ionicons name="volume-high" size={18} color={COLORS.white} />
+            )}
           </TouchableOpacity>
         </View>
         <TouchableOpacity onPress={() => handleDeleteWord(item.id)} style={styles.deleteButton}>
@@ -162,7 +182,7 @@ export default function DictionaryScreen() {
             />
           </View>
           <Text style={styles.progressText}>
-            {item.mastery_level >= 8 ? 'Mastered' : `${item.mastery_level}/8 reviews`}
+            {item.mastery_level >= 8 ? 'MASTERED' : `${item.mastery_level}/8`}
           </Text>
         </View>
       </View>
@@ -172,14 +192,15 @@ export default function DictionaryScreen() {
   const renderSectionHeader = ({ section }: { section: Section }) => (
     <View style={styles.sectionHeader}>
       <Text style={styles.sectionTitle}>{section.title}</Text>
-      <Text style={styles.sectionCount}>{section.data.length} words</Text>
+      <Text style={styles.sectionCount}>{section.data.length}</Text>
     </View>
   );
 
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
+        <ActivityIndicator size="large" color={COLORS.black} />
+        <Text style={styles.loadingText}>LOADING WORDS...</Text>
       </View>
     );
   }
@@ -187,23 +208,23 @@ export default function DictionaryScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <Text style={styles.title}>Dictionary</Text>
-        <Text style={styles.subtitle}>{words.length} words saved</Text>
+        <Text style={styles.title}>DICTIONARY</Text>
+        <Text style={styles.subtitle}>{words.length} WORDS SAVED</Text>
       </View>
 
       {/* Search Bar */}
       <View style={styles.searchContainer}>
-        <Ionicons name="search" size={20} color={COLORS.textMuted} />
+        <Ionicons name="search" size={20} color={COLORS.black} />
         <TextInput
           style={styles.searchInput}
-          placeholder="Search words..."
+          placeholder="SEARCH WORDS..."
           placeholderTextColor={COLORS.textMuted}
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
         {searchQuery ? (
           <TouchableOpacity onPress={() => setSearchQuery('')}>
-            <Ionicons name="close-circle" size={20} color={COLORS.textMuted} />
+            <Ionicons name="close" size={20} color={COLORS.black} />
           </TouchableOpacity>
         ) : null}
       </View>
@@ -217,7 +238,7 @@ export default function DictionaryScreen() {
             onPress={() => setFilterType(type)}
           >
             <Text style={[styles.filterTabText, filterType === type && styles.filterTabTextActive]}>
-              {type.charAt(0).toUpperCase() + type.slice(1)}
+              {type.toUpperCase()}
             </Text>
           </TouchableOpacity>
         ))}
@@ -226,7 +247,7 @@ export default function DictionaryScreen() {
       {words.length === 0 ? (
         <View style={styles.emptyState}>
           <Ionicons name="book-outline" size={64} color={COLORS.textMuted} />
-          <Text style={styles.emptyTitle}>No words yet</Text>
+          <Text style={styles.emptyTitle}>NO WORDS YET</Text>
           <Text style={styles.emptyText}>
             Start reading stories and save words to build your vocabulary!
           </Text>
@@ -244,12 +265,12 @@ export default function DictionaryScreen() {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              tintColor={COLORS.primary}
+              tintColor={COLORS.black}
             />
           }
           ListEmptyComponent={
             <View style={styles.emptyState}>
-              <Text style={styles.emptyText}>No words match your search</Text>
+              <Text style={styles.emptyText}>NO WORDS MATCH YOUR SEARCH</Text>
             </View>
           }
         />
@@ -269,6 +290,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: COLORS.background,
   },
+  loadingText: {
+    marginTop: SPACING.md,
+    fontSize: FONT_SIZES.sm,
+    color: COLORS.textSecondary,
+    fontWeight: '700',
+    letterSpacing: 2,
+  },
   header: {
     paddingHorizontal: SPACING.lg,
     paddingTop: SPACING.md,
@@ -276,31 +304,35 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: FONT_SIZES.xxl,
-    fontWeight: '700',
-    color: COLORS.text,
+    fontWeight: '900',
+    color: COLORS.black,
+    letterSpacing: 2,
   },
   subtitle: {
-    fontSize: FONT_SIZES.sm,
+    fontSize: FONT_SIZES.xs,
     color: COLORS.textSecondary,
     marginTop: SPACING.xs,
+    fontWeight: '600',
+    letterSpacing: 1,
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.surface,
-    borderRadius: BORDER_RADIUS.md,
+    backgroundColor: COLORS.white,
+    borderWidth: 2,
+    borderColor: COLORS.black,
     marginHorizontal: SPACING.lg,
     marginBottom: SPACING.md,
     paddingHorizontal: SPACING.md,
-    borderWidth: 1,
-    borderColor: COLORS.border,
   },
   searchInput: {
     flex: 1,
     paddingVertical: SPACING.md,
     paddingHorizontal: SPACING.sm,
-    fontSize: FONT_SIZES.md,
-    color: COLORS.text,
+    fontSize: FONT_SIZES.sm,
+    color: COLORS.black,
+    fontWeight: '600',
+    letterSpacing: 1,
   },
   filterTabs: {
     flexDirection: 'row',
@@ -311,19 +343,18 @@ const styles = StyleSheet.create({
   filterTab: {
     paddingVertical: SPACING.sm,
     paddingHorizontal: SPACING.md,
-    borderRadius: BORDER_RADIUS.full,
-    backgroundColor: COLORS.surface,
-    borderWidth: 1,
-    borderColor: COLORS.border,
+    backgroundColor: COLORS.white,
+    borderWidth: 2,
+    borderColor: COLORS.black,
   },
   filterTabActive: {
-    backgroundColor: COLORS.primary,
-    borderColor: COLORS.primary,
+    backgroundColor: COLORS.black,
   },
   filterTabText: {
-    fontSize: FONT_SIZES.sm,
-    color: COLORS.textSecondary,
-    fontWeight: '500',
+    fontSize: FONT_SIZES.xs,
+    color: COLORS.black,
+    fontWeight: '700',
+    letterSpacing: 1,
   },
   filterTabTextActive: {
     color: COLORS.white,
@@ -338,23 +369,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: SPACING.md,
     marginTop: SPACING.md,
+    borderBottomWidth: 2,
+    borderBottomColor: COLORS.black,
   },
   sectionTitle: {
-    fontSize: FONT_SIZES.sm,
-    fontWeight: '600',
+    fontSize: FONT_SIZES.xs,
+    fontWeight: '700',
     color: COLORS.textSecondary,
+    letterSpacing: 1,
   },
   sectionCount: {
-    fontSize: FONT_SIZES.xs,
-    color: COLORS.textMuted,
+    fontSize: FONT_SIZES.sm,
+    fontWeight: '900',
+    color: COLORS.black,
   },
   wordCard: {
-    backgroundColor: COLORS.surface,
-    borderRadius: BORDER_RADIUS.md,
+    backgroundColor: COLORS.white,
+    borderWidth: 2,
+    borderColor: COLORS.black,
     padding: SPACING.md,
-    marginBottom: SPACING.sm,
-    borderWidth: 1,
-    borderColor: COLORS.border,
+    marginTop: SPACING.sm,
   },
   wordHeader: {
     flexDirection: 'row',
@@ -368,18 +402,24 @@ const styles = StyleSheet.create({
   },
   wordText: {
     fontSize: FONT_SIZES.lg,
-    fontWeight: '700',
-    color: COLORS.text,
+    fontWeight: '900',
+    color: COLORS.black,
+    letterSpacing: 1,
   },
   speakButton: {
-    padding: SPACING.xs,
+    width: 36,
+    height: 36,
+    backgroundColor: COLORS.black,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   deleteButton: {
     padding: SPACING.xs,
   },
   translationText: {
     fontSize: FONT_SIZES.md,
-    color: COLORS.primary,
+    color: COLORS.accent,
+    fontWeight: '700',
     marginTop: SPACING.xs,
   },
   contextText: {
@@ -402,19 +442,19 @@ const styles = StyleSheet.create({
   },
   progressBar: {
     flex: 1,
-    height: 4,
-    backgroundColor: COLORS.border,
-    borderRadius: 2,
+    height: 6,
+    backgroundColor: COLORS.borderLight,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
     backgroundColor: COLORS.success,
-    borderRadius: 2,
   },
   progressText: {
     fontSize: FONT_SIZES.xs,
     color: COLORS.textMuted,
+    fontWeight: '700',
+    letterSpacing: 1,
   },
   emptyState: {
     flex: 1,
@@ -424,9 +464,10 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: FONT_SIZES.lg,
-    fontWeight: '600',
-    color: COLORS.text,
+    fontWeight: '900',
+    color: COLORS.black,
     marginTop: SPACING.md,
+    letterSpacing: 2,
   },
   emptyText: {
     fontSize: FONT_SIZES.sm,
