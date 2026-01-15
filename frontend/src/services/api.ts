@@ -74,3 +74,9 @@ export const reviewApi = {
 export const statsApi = {
   get: (userId: string) => api.get(`/stats/${userId}`),
 };
+
+// TTS API - AI-powered natural speech
+export const ttsApi = {
+  generate: (text: string, voice: string = 'alloy', speed: number = 1.0) =>
+    api.post('/tts/generate', { text, voice, speed }),
+};
