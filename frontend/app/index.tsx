@@ -1,9 +1,9 @@
-import React, { useEffect } from 'react';
+import React from 'react';
+import { useEffect } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../src/store/authStore';
 import { COLORS, FONT_SIZES, SPACING } from '../src/constants/theme';
-import { Ionicons } from '@expo/vector-icons';
 
 export default function SplashScreen() {
   const router = useRouter();
@@ -30,11 +30,13 @@ export default function SplashScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.logoContainer}>
-        <Ionicons name="book" size={80} color={COLORS.primary} />
-        <Text style={styles.title}>FluentStory</Text>
-        <Text style={styles.subtitle}>Learn languages through stories</Text>
+        <View style={styles.logoBox}>
+          <Text style={styles.logoText}>FS</Text>
+        </View>
+        <Text style={styles.title}>FLUENTSTORY</Text>
+        <Text style={styles.subtitle}>LEARN LANGUAGES THROUGH STORIES</Text>
       </View>
-      <ActivityIndicator size="large" color={COLORS.primary} style={styles.loader} />
+      <ActivityIndicator size="large" color={COLORS.black} style={styles.loader} />
     </View>
   );
 }
@@ -49,16 +51,31 @@ const styles = StyleSheet.create({
   logoContainer: {
     alignItems: 'center',
   },
-  title: {
+  logoBox: {
+    width: 100,
+    height: 100,
+    backgroundColor: COLORS.black,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: SPACING.lg,
+  },
+  logoText: {
     fontSize: FONT_SIZES.title,
-    fontWeight: '700',
-    color: COLORS.text,
-    marginTop: SPACING.md,
+    fontWeight: '900',
+    color: COLORS.white,
+  },
+  title: {
+    fontSize: FONT_SIZES.xxl,
+    fontWeight: '900',
+    color: COLORS.black,
+    letterSpacing: 4,
   },
   subtitle: {
-    fontSize: FONT_SIZES.md,
+    fontSize: FONT_SIZES.xs,
     color: COLORS.textSecondary,
     marginTop: SPACING.xs,
+    letterSpacing: 2,
+    fontWeight: '600',
   },
   loader: {
     marginTop: SPACING.xxl,

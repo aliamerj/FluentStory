@@ -17,7 +17,7 @@ import { storyApi } from '../src/services/api';
 import { Button } from '../src/components/Button';
 import { Dropdown } from '../src/components/Dropdown';
 import { Input } from '../src/components/Input';
-import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS } from '../src/constants/theme';
+import { COLORS, SPACING, FONT_SIZES, SHADOWS } from '../src/constants/theme';
 import { LANGUAGES, PROFICIENCY_LEVELS, CONTENT_TYPES, TOPICS } from '../src/constants/languages';
 
 export default function GenerateScreen() {
@@ -40,12 +40,6 @@ export default function GenerateScreen() {
   const levelOptions = PROFICIENCY_LEVELS.map((lvl) => ({
     id: lvl.id,
     label: lvl.label,
-  }));
-
-  const contentTypeOptions = CONTENT_TYPES.map((type) => ({
-    id: type.id,
-    label: type.label,
-    icon: type.icon,
   }));
 
   const topicOptions = TOPICS.map((t) => ({
@@ -78,7 +72,7 @@ export default function GenerateScreen() {
     }
   };
 
-  const storiesRemaining = user?.is_premium ? 'Unlimited' : `${5 - (user?.stories_generated_this_month || 0)} left this month`;
+  const storiesRemaining = user?.is_premium ? 'UNLIMITED' : `${5 - (user?.stories_generated_this_month || 0)} LEFT`;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -89,9 +83,9 @@ export default function GenerateScreen() {
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="close" size={28} color={COLORS.text} />
+            <Ionicons name="close" size={28} color={COLORS.black} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Generate Story</Text>
+          <Text style={styles.headerTitle}>GENERATE STORY</Text>
           <View style={styles.backButton} />
         </View>
 
@@ -101,15 +95,19 @@ export default function GenerateScreen() {
         >
           {/* Stories Remaining */}
           <View style={styles.quotaBanner}>
-            <Ionicons name="sparkles" size={18} color={COLORS.primary} />
+            <Ionicons name="sparkles" size={18} color={COLORS.white} />
             <Text style={styles.quotaText}>{storiesRemaining}</Text>
           </View>
 
-          {error ? <Text style={styles.error}>{error}</Text> : null}
+          {error ? (
+            <View style={styles.errorBox}>
+              <Text style={styles.errorText}>{error}</Text>
+            </View>
+          ) : null}
 
           {/* Language Selection */}
           <Dropdown
-            label="Language"
+            label="Target Language"
             options={languageOptions}
             selectedValue={language}
             onSelect={setLanguage}
@@ -126,7 +124,7 @@ export default function GenerateScreen() {
           />
 
           {/* Content Type */}
-          <Text style={styles.label}>Content Type</Text>
+          <Text style={styles.label}>CONTENT TYPE</Text>
           <View style={styles.contentTypeGrid}>
             {CONTENT_TYPES.map((type) => (
               <TouchableOpacity
@@ -140,7 +138,7 @@ export default function GenerateScreen() {
                 <Ionicons
                   name={type.icon as any}
                   size={24}
-                  color={contentType === type.id ? COLORS.primary : COLORS.textSecondary}
+                  color={contentType === type.id ? COLORS.white : COLORS.black}
                 />
                 <Text
                   style={[
@@ -148,7 +146,7 @@ export default function GenerateScreen() {
                     contentType === type.id && styles.contentTypeLabelSelected,
                   ]}
                 >
-                  {type.label}
+                  {type.label.toUpperCase()}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -167,7 +165,12 @@ export default function GenerateScreen() {
           />
 
           {/* Custom Topic */}
-          <Text style={styles.orText}>OR</Text>
+          <View style={styles.orDivider}>
+            <View style={styles.orLine} />
+            <Text style={styles.orText}>OR</Text>
+            <View style={styles.orLine} />
+          </View>
+
           <Input
             label="Custom Topic"
             placeholder="Write your own topic..."
@@ -179,12 +182,13 @@ export default function GenerateScreen() {
 
           {/* Generate Button */}
           <Button
-            title={isGenerating ? 'Generating...' : 'Generate Story'}
+            title={isGenerating ? 'GENERATING...' : 'GENERATE STORY'}
             onPress={handleGenerate}
             loading={isGenerating}
             disabled={isGenerating}
             fullWidth
             size="lg"
+            variant="accent"
             style={styles.generateButton}
             icon={!isGenerating && <Ionicons name="sparkles" size={20} color={COLORS.white} />}
           />
@@ -192,13 +196,11 @@ export default function GenerateScreen() {
           {/* Generation Info */}
           {isGenerating && (
             <View style={styles.generatingInfo}>
-              <ActivityIndicator size="small" color={COLORS.primary} />
-              <Text style={styles.generatingText}>
-                Creating your personalized story...
-              </Text>
-              <Text style={styles.generatingSubtext}>
-                This may take 15-30 seconds
-              </Text>
+              <View style={styles.loadingBox}>
+                <ActivityIndicator size="large" color={COLORS.black} />
+              </View>
+              <Text style={styles.generatingText}>AI IS CREATING YOUR STORY...</Text>
+              <Text style={styles.generatingSubtext}>This may take 15-30 seconds</Text>
             </View>
           )}
         </ScrollView>
@@ -221,8 +223,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.md,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    borderBottomWidth: 3,
+    borderBottomColor: COLORS.black,
+    backgroundColor: COLORS.white,
   },
   backButton: {
     width: 44,
@@ -231,9 +234,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerTitle: {
-    fontSize: FONT_SIZES.lg,
-    fontWeight: '600',
-    color: COLORS.text,
+    fontSize: FONT_SIZES.md,
+    fontWeight: '900',
+    color: COLORS.black,
+    letterSpacing: 2,
   },
   scrollContent: {
     padding: SPACING.lg,
@@ -243,31 +247,35 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: COLORS.primary + '20',
-    borderRadius: BORDER_RADIUS.md,
-    padding: SPACING.sm,
+    backgroundColor: COLORS.black,
+    padding: SPACING.md,
     marginBottom: SPACING.lg,
-    gap: SPACING.xs,
+    gap: SPACING.sm,
   },
   quotaText: {
     fontSize: FONT_SIZES.sm,
-    color: COLORS.primary,
-    fontWeight: '500',
+    color: COLORS.white,
+    fontWeight: '700',
+    letterSpacing: 2,
   },
-  error: {
+  errorBox: {
+    backgroundColor: COLORS.errorLight,
+    borderWidth: 2,
+    borderColor: COLORS.error,
+    padding: SPACING.md,
+    marginBottom: SPACING.md,
+  },
+  errorText: {
     color: COLORS.error,
     fontSize: FONT_SIZES.sm,
-    textAlign: 'center',
-    marginBottom: SPACING.md,
-    backgroundColor: COLORS.error + '20',
-    padding: SPACING.md,
-    borderRadius: BORDER_RADIUS.md,
+    fontWeight: '600',
   },
   label: {
-    fontSize: FONT_SIZES.sm,
+    fontSize: FONT_SIZES.xs,
     color: COLORS.textSecondary,
     marginBottom: SPACING.xs,
-    fontWeight: '500',
+    fontWeight: '700',
+    letterSpacing: 1,
   },
   contentTypeGrid: {
     flexDirection: 'row',
@@ -277,44 +285,65 @@ const styles = StyleSheet.create({
   },
   contentTypeCard: {
     width: '48%',
-    backgroundColor: COLORS.surface,
-    borderRadius: BORDER_RADIUS.md,
+    backgroundColor: COLORS.white,
+    borderWidth: 2,
+    borderColor: COLORS.black,
     padding: SPACING.md,
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: COLORS.border,
   },
   contentTypeCardSelected: {
-    borderColor: COLORS.primary,
-    backgroundColor: COLORS.primary + '10',
+    backgroundColor: COLORS.black,
   },
   contentTypeLabel: {
-    fontSize: FONT_SIZES.sm,
-    color: COLORS.textSecondary,
+    fontSize: FONT_SIZES.xs,
+    color: COLORS.black,
     marginTop: SPACING.xs,
-    fontWeight: '500',
+    fontWeight: '700',
+    letterSpacing: 1,
   },
   contentTypeLabelSelected: {
-    color: COLORS.primary,
+    color: COLORS.white,
+  },
+  orDivider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: SPACING.md,
+  },
+  orLine: {
+    flex: 1,
+    height: 2,
+    backgroundColor: COLORS.black,
   },
   orText: {
-    fontSize: FONT_SIZES.sm,
-    color: COLORS.textMuted,
-    textAlign: 'center',
-    marginVertical: SPACING.sm,
+    fontSize: FONT_SIZES.xs,
+    color: COLORS.black,
+    fontWeight: '700',
+    letterSpacing: 2,
+    paddingHorizontal: SPACING.md,
   },
   generateButton: {
     marginTop: SPACING.lg,
   },
   generatingInfo: {
     alignItems: 'center',
-    marginTop: SPACING.lg,
-    gap: SPACING.sm,
+    marginTop: SPACING.xl,
+    gap: SPACING.md,
+  },
+  loadingBox: {
+    width: 80,
+    height: 80,
+    backgroundColor: COLORS.white,
+    borderWidth: 3,
+    borderColor: COLORS.black,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...SHADOWS.md,
   },
   generatingText: {
     fontSize: FONT_SIZES.md,
-    color: COLORS.text,
-    fontWeight: '500',
+    color: COLORS.black,
+    fontWeight: '900',
+    letterSpacing: 1,
   },
   generatingSubtext: {
     fontSize: FONT_SIZES.sm,
