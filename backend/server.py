@@ -631,6 +631,49 @@ async def root():
 async def health_check():
     return {"status": "healthy", "timestamp": datetime.utcnow().isoformat()}
 
+# ============= TEXT-TO-SPEECH ENDPOINT =============
+
+class TTSRequest(BaseModel):
+    text: str
+    voice: str = "alloy"  # alloy, echo, fable, onyx, nova, shimmer
+    speed: float = 1.0
+
+@api_router.post("/tts/generate")
+async def generate_tts(request: TTSRequest):
+    """Generate natural-sounding speech using OpenAI TTS"""
+    try:
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            response = await client.post(
+                "https://api.openai.com/v1/audio/speech",
+                headers={
+                    "Authorization": f"Bearer {EMERGENT_LLM_KEY}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "model": "tts-1",
+                    "input": request.text,
+                    "voice": request.voice,
+                    "speed": request.speed,
+                    "response_format": "mp3"
+                }
+            )
+            
+            if response.status_code != 200:
+                logger.error(f"TTS API error: {response.text}")
+                raise HTTPException(status_code=500, detail="TTS generation failed")
+            
+            # Return audio as base64
+            audio_b64 = base64.b64encode(response.content).decode()
+            return {
+                "audio_base64": audio_b64,
+                "format": "mp3"
+            }
+    except httpx.TimeoutException:
+        raise HTTPException(status_code=504, detail="TTS generation timed out")
+    except Exception as e:
+        logger.error(f"TTS error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"TTS error: {str(e)}")
+
 # Include the router in the main app
 app.include_router(api_router)
 
