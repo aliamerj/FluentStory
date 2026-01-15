@@ -1,9 +1,8 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { COLORS, FONT_SIZES } from '../../src/constants/theme';
-import { useAuthStore } from '../../src/store/authStore';
 import { View, Text, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { COLORS, FONT_SIZES, SPACING } from '../../src/constants/theme';
 
 export default function TabsLayout() {
   return (
@@ -11,18 +10,20 @@ export default function TabsLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: COLORS.surface,
-          borderTopColor: COLORS.border,
-          borderTopWidth: 1,
-          height: 85,
-          paddingBottom: 20,
+          backgroundColor: COLORS.white,
+          borderTopWidth: 3,
+          borderTopColor: COLORS.black,
+          height: 80,
+          paddingBottom: 15,
           paddingTop: 10,
         },
-        tabBarActiveTintColor: COLORS.primary,
+        tabBarActiveTintColor: COLORS.accent,
         tabBarInactiveTintColor: COLORS.textMuted,
         tabBarLabelStyle: {
           fontSize: FONT_SIZES.xs,
-          fontWeight: '500',
+          fontWeight: '700',
+          letterSpacing: 1,
+          textTransform: 'uppercase',
         },
       }}
     >
@@ -38,7 +39,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="dictionary"
         options={{
-          title: 'Dictionary',
+          title: 'Words',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="book" size={size} color={color} />
           ),
@@ -48,8 +49,8 @@ export default function TabsLayout() {
         name="review"
         options={{
           title: 'Review',
-          tabBarIcon: ({ color, size, focused }) => (
-            <ReviewTabIcon color={color} size={size} />
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="refresh" size={size} color={color} />
           ),
         }}
       />
@@ -65,11 +66,3 @@ export default function TabsLayout() {
     </Tabs>
   );
 }
-
-const ReviewTabIcon = ({ color, size }: { color: string; size: number }) => {
-  return (
-    <View>
-      <Ionicons name="refresh" size={size} color={color} />
-    </View>
-  );
-};

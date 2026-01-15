@@ -14,7 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../../src/store/authStore';
 import { Input } from '../../src/components/Input';
 import { Button } from '../../src/components/Button';
-import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS } from '../../src/constants/theme';
+import { COLORS, SPACING, FONT_SIZES } from '../../src/constants/theme';
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -65,18 +65,28 @@ export default function RegisterScreen() {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
+          {/* Header */}
           <View style={styles.header}>
-            <Ionicons name="book" size={60} color={COLORS.primary} />
-            <Text style={styles.title}>Create Account</Text>
-            <Text style={styles.subtitle}>Start your language journey today</Text>
+            <View style={styles.logoBox}>
+              <Text style={styles.logoText}>FS</Text>
+            </View>
+            <Text style={styles.title}>JOIN US</Text>
+            <Text style={styles.subtitle}>START YOUR LANGUAGE JOURNEY</Text>
           </View>
 
+          {/* Form */}
           <View style={styles.form}>
-            {error ? <Text style={styles.error}>{error}</Text> : null}
+            <Text style={styles.formTitle}>CREATE ACCOUNT</Text>
+            
+            {error ? (
+              <View style={styles.errorBox}>
+                <Text style={styles.errorText}>{error}</Text>
+              </View>
+            ) : null}
 
             <Input
               label="Email"
-              placeholder="Enter your email"
+              placeholder="your@email.com"
               value={email}
               onChangeText={setEmail}
               keyboardType="email-address"
@@ -85,7 +95,7 @@ export default function RegisterScreen() {
 
             <Input
               label="Password"
-              placeholder="Create a password"
+              placeholder="Min. 6 characters"
               value={password}
               onChangeText={setPassword}
               secureTextEntry
@@ -93,7 +103,7 @@ export default function RegisterScreen() {
 
             <Input
               label="Confirm Password"
-              placeholder="Confirm your password"
+              placeholder="Repeat password"
               value={confirmPassword}
               onChangeText={setConfirmPassword}
               secureTextEntry
@@ -105,31 +115,35 @@ export default function RegisterScreen() {
               loading={isLoading}
               fullWidth
               size="lg"
+              variant="accent"
               style={{ marginTop: SPACING.md }}
             />
 
+            {/* Divider */}
             <View style={styles.divider}>
               <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>or</Text>
+              <Text style={styles.dividerText}>OR</Text>
               <View style={styles.dividerLine} />
             </View>
 
+            {/* Social Buttons */}
             <TouchableOpacity style={styles.socialButton}>
-              <Ionicons name="logo-google" size={20} color={COLORS.text} />
-              <Text style={styles.socialButtonText}>Continue with Google</Text>
+              <Ionicons name="logo-google" size={20} color={COLORS.black} />
+              <Text style={styles.socialButtonText}>GOOGLE</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.socialButton}>
-              <Ionicons name="logo-apple" size={20} color={COLORS.text} />
-              <Text style={styles.socialButtonText}>Continue with Apple</Text>
+              <Ionicons name="logo-apple" size={20} color={COLORS.black} />
+              <Text style={styles.socialButtonText}>APPLE</Text>
             </TouchableOpacity>
           </View>
 
+          {/* Footer */}
           <View style={styles.footer}>
-            <Text style={styles.footerText}>Already have an account? </Text>
+            <Text style={styles.footerText}>HAVE ACCOUNT? </Text>
             <Link href="/(auth)/login" asChild>
               <TouchableOpacity>
-                <Text style={styles.linkText}>Sign In</Text>
+                <Text style={styles.linkText}>SIGN IN</Text>
               </TouchableOpacity>
             </Link>
           </View>
@@ -153,28 +167,56 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    marginTop: SPACING.xl,
+    marginTop: SPACING.lg,
     marginBottom: SPACING.xl,
   },
-  title: {
+  logoBox: {
+    width: 80,
+    height: 80,
+    backgroundColor: COLORS.accent,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: SPACING.md,
+  },
+  logoText: {
     fontSize: FONT_SIZES.xxxl,
-    fontWeight: '700',
-    color: COLORS.text,
-    marginTop: SPACING.md,
+    fontWeight: '900',
+    color: COLORS.white,
+  },
+  title: {
+    fontSize: FONT_SIZES.xxl,
+    fontWeight: '900',
+    color: COLORS.black,
+    letterSpacing: 4,
   },
   subtitle: {
-    fontSize: FONT_SIZES.md,
+    fontSize: FONT_SIZES.xs,
     color: COLORS.textSecondary,
     marginTop: SPACING.xs,
+    letterSpacing: 2,
+    fontWeight: '600',
   },
   form: {
     flex: 1,
   },
-  error: {
+  formTitle: {
+    fontSize: FONT_SIZES.lg,
+    fontWeight: '900',
+    color: COLORS.black,
+    marginBottom: SPACING.lg,
+    letterSpacing: 2,
+  },
+  errorBox: {
+    backgroundColor: COLORS.errorLight,
+    borderWidth: 2,
+    borderColor: COLORS.error,
+    padding: SPACING.md,
+    marginBottom: SPACING.md,
+  },
+  errorText: {
     color: COLORS.error,
     fontSize: FONT_SIZES.sm,
-    marginBottom: SPACING.md,
-    textAlign: 'center',
+    fontWeight: '600',
   },
   divider: {
     flexDirection: 'row',
@@ -183,44 +225,50 @@ const styles = StyleSheet.create({
   },
   dividerLine: {
     flex: 1,
-    height: 1,
-    backgroundColor: COLORS.border,
+    height: 2,
+    backgroundColor: COLORS.black,
   },
   dividerText: {
-    color: COLORS.textMuted,
+    color: COLORS.black,
     paddingHorizontal: SPACING.md,
-    fontSize: FONT_SIZES.sm,
+    fontSize: FONT_SIZES.xs,
+    fontWeight: '700',
+    letterSpacing: 2,
   },
   socialButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: COLORS.backgroundSecondary,
-    borderRadius: BORDER_RADIUS.md,
+    backgroundColor: COLORS.white,
+    borderWidth: 2,
+    borderColor: COLORS.black,
     paddingVertical: SPACING.md,
     marginBottom: SPACING.sm,
-    borderWidth: 1,
-    borderColor: COLORS.border,
     gap: SPACING.sm,
   },
   socialButtonText: {
-    color: COLORS.text,
-    fontSize: FONT_SIZES.md,
-    fontWeight: '500',
+    color: COLORS.black,
+    fontSize: FONT_SIZES.sm,
+    fontWeight: '700',
+    letterSpacing: 1,
   },
   footer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: SPACING.lg,
+    paddingVertical: SPACING.md,
   },
   footerText: {
     color: COLORS.textSecondary,
-    fontSize: FONT_SIZES.md,
+    fontSize: FONT_SIZES.sm,
+    fontWeight: '600',
+    letterSpacing: 1,
   },
   linkText: {
-    color: COLORS.primary,
-    fontSize: FONT_SIZES.md,
-    fontWeight: '600',
+    color: COLORS.accent,
+    fontSize: FONT_SIZES.sm,
+    fontWeight: '700',
+    letterSpacing: 1,
   },
 });
