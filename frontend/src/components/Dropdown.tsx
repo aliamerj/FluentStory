@@ -9,7 +9,7 @@ import {
   TouchableWithoutFeedback,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS } from '../constants/theme';
+import { COLORS, SPACING, FONT_SIZES } from '../constants/theme';
 
 interface DropdownOption {
   id: string;
@@ -47,12 +47,12 @@ export const Dropdown: React.FC<DropdownProps> = ({
       <TouchableOpacity
         style={styles.trigger}
         onPress={() => setIsOpen(true)}
-        activeOpacity={0.7}
+        activeOpacity={0.8}
       >
         <Text style={[styles.triggerText, !selectedOption && styles.placeholder]}>
           {selectedOption?.label || placeholder}
         </Text>
-        <Ionicons name="chevron-down" size={20} color={COLORS.textSecondary} />
+        <Ionicons name="chevron-down" size={20} color={COLORS.black} />
       </TouchableOpacity>
 
       <Modal
@@ -65,7 +65,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
           <View style={styles.overlay}>
             <TouchableWithoutFeedback>
               <View style={styles.dropdown}>
-                <Text style={styles.dropdownTitle}>{label || 'Select'}</Text>
+                <Text style={styles.dropdownTitle}>{label || 'SELECT'}</Text>
                 <FlatList
                   data={options}
                   keyExtractor={(item) => item.id}
@@ -83,8 +83,8 @@ export const Dropdown: React.FC<DropdownProps> = ({
                           size={20}
                           color={
                             item.id === selectedValue
-                              ? COLORS.primary
-                              : COLORS.textSecondary
+                              ? COLORS.white
+                              : COLORS.black
                           }
                         />
                       )}
@@ -100,7 +100,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
                         <Ionicons
                           name="checkmark"
                           size={20}
-                          color={COLORS.primary}
+                          color={COLORS.white}
                           style={styles.checkmark}
                         />
                       )}
@@ -122,49 +122,54 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.md,
   },
   label: {
-    fontSize: FONT_SIZES.sm,
+    fontSize: FONT_SIZES.xs,
     color: COLORS.textSecondary,
     marginBottom: SPACING.xs,
-    fontWeight: '500',
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   trigger: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: COLORS.backgroundSecondary,
-    borderRadius: BORDER_RADIUS.md,
-    borderWidth: 1,
-    borderColor: COLORS.border,
+    backgroundColor: COLORS.white,
+    borderWidth: 2,
+    borderColor: COLORS.black,
     paddingVertical: SPACING.md,
     paddingHorizontal: SPACING.md,
   },
   triggerText: {
     fontSize: FONT_SIZES.md,
-    color: COLORS.text,
+    color: COLORS.black,
+    fontWeight: '500',
   },
   placeholder: {
     color: COLORS.textMuted,
   },
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: SPACING.lg,
   },
   dropdown: {
-    backgroundColor: COLORS.surface,
-    borderRadius: BORDER_RADIUS.lg,
+    backgroundColor: COLORS.white,
+    borderWidth: 3,
+    borderColor: COLORS.black,
     width: '100%',
     maxHeight: 400,
     padding: SPACING.md,
   },
   dropdownTitle: {
-    fontSize: FONT_SIZES.lg,
-    fontWeight: '600',
-    color: COLORS.text,
+    fontSize: FONT_SIZES.md,
+    fontWeight: '900',
+    color: COLORS.black,
     marginBottom: SPACING.md,
     textAlign: 'center',
+    textTransform: 'uppercase',
+    letterSpacing: 2,
   },
   list: {
     flexGrow: 0,
@@ -173,20 +178,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: SPACING.md,
-    borderRadius: BORDER_RADIUS.md,
     gap: SPACING.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.borderLight,
   },
   selectedOption: {
-    backgroundColor: COLORS.primary + '20',
+    backgroundColor: COLORS.black,
   },
   optionText: {
     flex: 1,
     fontSize: FONT_SIZES.md,
-    color: COLORS.text,
+    color: COLORS.black,
+    fontWeight: '500',
   },
   selectedOptionText: {
-    color: COLORS.primary,
-    fontWeight: '600',
+    color: COLORS.white,
   },
   checkmark: {
     marginLeft: 'auto',

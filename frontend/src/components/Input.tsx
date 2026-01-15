@@ -8,7 +8,7 @@ import {
   ViewStyle,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS } from '../constants/theme';
+import { COLORS, SPACING, FONT_SIZES } from '../constants/theme';
 
 interface InputProps {
   label?: string;
@@ -94,18 +94,19 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.md,
   },
   label: {
-    fontSize: FONT_SIZES.sm,
+    fontSize: FONT_SIZES.xs,
     color: COLORS.textSecondary,
     marginBottom: SPACING.xs,
-    fontWeight: '500',
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.backgroundSecondary,
-    borderRadius: BORDER_RADIUS.md,
-    borderWidth: 1,
-    borderColor: COLORS.border,
+    backgroundColor: COLORS.white,
+    borderWidth: 2,
+    borderColor: COLORS.black,
   },
   input: {
     flex: 1,
@@ -113,15 +114,17 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.md,
     paddingVertical: SPACING.md,
     paddingHorizontal: SPACING.md,
+    fontFamily: 'monospace',
   },
   focused: {
-    borderColor: COLORS.primary,
+    borderColor: COLORS.accent,
   },
   error: {
     borderColor: COLORS.error,
   },
   disabled: {
     opacity: 0.6,
+    backgroundColor: COLORS.backgroundAlt,
   },
   eyeIcon: {
     padding: SPACING.md,
@@ -130,5 +133,6 @@ const styles = StyleSheet.create({
     color: COLORS.error,
     fontSize: FONT_SIZES.xs,
     marginTop: SPACING.xs,
+    fontWeight: '600',
   },
 });

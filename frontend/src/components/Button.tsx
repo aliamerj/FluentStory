@@ -7,12 +7,12 @@ import {
   ViewStyle,
   TextStyle,
 } from 'react-native';
-import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS } from '../constants/theme';
+import { COLORS, SPACING, FONT_SIZES, SHADOWS } from '../constants/theme';
 
 interface ButtonProps {
   title: string;
   onPress: () => void;
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'accent';
   size?: 'sm' | 'md' | 'lg';
   loading?: boolean;
   disabled?: boolean;
@@ -56,10 +56,10 @@ export const Button: React.FC<ButtonProps> = ({
       style={buttonStyles}
       onPress={onPress}
       disabled={disabled || loading}
-      activeOpacity={0.7}
+      activeOpacity={0.8}
     >
       {loading ? (
-        <ActivityIndicator color={variant === 'outline' ? COLORS.primary : COLORS.white} />
+        <ActivityIndicator color={variant === 'outline' ? COLORS.black : COLORS.white} />
       ) : (
         <>
           {icon}
@@ -75,22 +75,27 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: BORDER_RADIUS.md,
     gap: SPACING.sm,
+    borderWidth: 2,
+    borderColor: COLORS.black,
   },
   primary: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.black,
   },
   secondary: {
-    backgroundColor: COLORS.secondary,
+    backgroundColor: COLORS.backgroundAlt,
+  },
+  accent: {
+    backgroundColor: COLORS.accent,
+    borderColor: COLORS.accent,
   },
   outline: {
     backgroundColor: 'transparent',
-    borderWidth: 2,
-    borderColor: COLORS.primary,
+    borderColor: COLORS.black,
   },
   ghost: {
     backgroundColor: 'transparent',
+    borderColor: 'transparent',
   },
   size_sm: {
     paddingVertical: SPACING.sm,
@@ -111,28 +116,33 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   text: {
-    fontWeight: '600',
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 1.5,
   },
   text_primary: {
     color: COLORS.white,
   },
   text_secondary: {
+    color: COLORS.black,
+  },
+  text_accent: {
     color: COLORS.white,
   },
   text_outline: {
-    color: COLORS.primary,
+    color: COLORS.black,
   },
   text_ghost: {
-    color: COLORS.primary,
+    color: COLORS.black,
   },
   textSize_sm: {
-    fontSize: FONT_SIZES.sm,
+    fontSize: FONT_SIZES.xs,
   },
   textSize_md: {
-    fontSize: FONT_SIZES.md,
+    fontSize: FONT_SIZES.sm,
   },
   textSize_lg: {
-    fontSize: FONT_SIZES.lg,
+    fontSize: FONT_SIZES.md,
   },
   textDisabled: {
     opacity: 0.7,

@@ -1,12 +1,12 @@
 import React from 'react';
 import { View, StyleSheet, ViewStyle, TouchableOpacity } from 'react-native';
-import { COLORS, SPACING, BORDER_RADIUS } from '../constants/theme';
+import { COLORS, SPACING, SHADOWS } from '../constants/theme';
 
 interface CardProps {
   children: React.ReactNode;
   style?: ViewStyle;
   onPress?: () => void;
-  variant?: 'default' | 'elevated' | 'outline';
+  variant?: 'default' | 'elevated' | 'outline' | 'accent';
 }
 
 export const Card: React.FC<CardProps> = ({
@@ -19,7 +19,7 @@ export const Card: React.FC<CardProps> = ({
 
   if (onPress) {
     return (
-      <TouchableOpacity style={cardStyles} onPress={onPress} activeOpacity={0.7}>
+      <TouchableOpacity style={cardStyles} onPress={onPress} activeOpacity={0.8}>
         {children}
       </TouchableOpacity>
     );
@@ -30,24 +30,20 @@ export const Card: React.FC<CardProps> = ({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: COLORS.surface,
-    borderRadius: BORDER_RADIUS.lg,
-    padding: SPACING.md,
+    backgroundColor: COLORS.white,
+    padding: SPACING.lg,
+    borderWidth: 2,
+    borderColor: COLORS.black,
   },
-  default: {
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
+  default: {},
   elevated: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
+    ...SHADOWS.md,
   },
   outline: {
     backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: COLORS.border,
+  },
+  accent: {
+    borderColor: COLORS.accent,
+    borderWidth: 3,
   },
 });
