@@ -9,10 +9,9 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Audio } from 'expo-av';
+import * as Speech from 'expo-speech';
 import { COLORS, SPACING, FONT_SIZES } from '../constants/theme';
 import { Button } from './Button';
-import { ttsApi } from '../services/api';
 
 interface WordModalProps {
   visible: boolean;
@@ -26,6 +25,29 @@ interface WordModalProps {
   onRemove?: () => Promise<void>;
   isLoading?: boolean;
 }
+
+// Map language names to speech codes
+const getLanguageCode = (language: string): string => {
+  const langMap: { [key: string]: string } = {
+    'English': 'en-US',
+    'Spanish': 'es-ES',
+    'French': 'fr-FR',
+    'German': 'de-DE',
+    'Italian': 'it-IT',
+    'Portuguese': 'pt-BR',
+    'Russian': 'ru-RU',
+    'Chinese': 'zh-CN',
+    'Japanese': 'ja-JP',
+    'Korean': 'ko-KR',
+    'Arabic': 'ar-SA',
+    'Hindi': 'hi-IN',
+    'Dutch': 'nl-NL',
+    'Polish': 'pl-PL',
+    'Swedish': 'sv-SE',
+    'Turkish': 'tr-TR',
+  };
+  return langMap[language] || language.toLowerCase().substring(0, 2);
+};
 
 export const WordModal: React.FC<WordModalProps> = ({
   visible,
@@ -41,31 +63,22 @@ export const WordModal: React.FC<WordModalProps> = ({
 }) => {
   const [isSaving, setIsSaving] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [sound, setSound] = useState<Audio.Sound | null>(null);
 
   const handleSpeak = async () => {
     if (isSpeaking) return;
     
     setIsSpeaking(true);
     try {
-      // Use AI TTS for natural speech
-      const response = await ttsApi.generate(word, 'nova', 0.9);
-      const audioBase64 = response.data.audio_base64;
-      
-      // Play the audio
-      const { sound: newSound } = await Audio.Sound.createAsync(
-        { uri: `data:audio/mp3;base64,${audioBase64}` },
-        { shouldPlay: true }
-      );
-      setSound(newSound);
-      
-      newSound.setOnPlaybackStatusUpdate((status) => {
-        if (status.isLoaded && status.didJustFinish) {
-          setIsSpeaking(false);
-        }
+      const langCode = getLanguageCode(language);
+      await Speech.speak(word, {
+        language: langCode,
+        rate: 0.75, // Slower for better clarity
+        pitch: 1.0,
+        onDone: () => setIsSpeaking(false),
+        onError: () => setIsSpeaking(false),
       });
     } catch (error) {
-      console.error('TTS error:', error);
+      console.error('Speech error:', error);
       setIsSpeaking(false);
     }
   };
