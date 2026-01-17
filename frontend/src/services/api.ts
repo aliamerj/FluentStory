@@ -80,3 +80,16 @@ export const ttsApi = {
   generate: (text: string, voice: string = 'alloy', speed: number = 1.0) =>
     api.post('/tts/generate', { text, voice, speed }),
 };
+
+// Feedback API
+export const feedbackApi = {
+  submit: (userId: string, data: {
+    rating?: number;
+    message: string;
+    category?: string;
+    user_context?: any;
+  }) => api.post(`/feedback/submit?user_id=${userId}`, data),
+  
+  getAll: (userId: string, limit = 50) =>
+    api.get(`/feedback/${userId}?limit=${limit}`),
+};
