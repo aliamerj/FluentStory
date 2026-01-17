@@ -56,6 +56,7 @@ export default function HomeScreen() {
   const router = useRouter();
   const { user, refreshUser } = useAuthStore();
   const { colors } = useTheme();
+  const { t } = useLocalization();
   
   const [stats, setStats] = useState<Stats | null>(null);
   const [recentStories, setRecentStories] = useState<Story[]>([]);
