@@ -123,6 +123,26 @@ class TranslationRequest(BaseModel):
     source_language: str
     target_language: str
 
+class FeedbackCreate(BaseModel):
+    rating: Optional[int] = None  # 1-5 stars
+    message: str
+    category: Optional[str] = None  # bug, feature, improvement, other
+    user_context: Optional[Dict[str, Any]] = None  # app state when feedback given
+
+class FeedbackResponse(BaseModel):
+    id: str
+    user_id: str
+    rating: Optional[int]
+    message: str
+    category: Optional[str]
+    user_context: Optional[Dict[str, Any]]
+    created_at: str
+
+class TTSRequest(BaseModel):
+    text: str
+    voice: str = "alloy"  # alloy, echo, fable, onyx, nova, shimmer
+    speed: float = 1.0
+
 # ============= HELPER FUNCTIONS =============
 
 def generate_session_id():
