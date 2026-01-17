@@ -43,6 +43,7 @@ export default function DictionaryScreen() {
   const router = useRouter();
   const { user } = useAuthStore();
   const { colors } = useTheme();
+  const { t } = useLocalization();
   
   const [words, setWords] = useState<Word[]>([]);
   const [filteredWords, setFilteredWords] = useState<Word[]>([]);
