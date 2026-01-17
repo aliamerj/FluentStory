@@ -16,6 +16,7 @@ import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../src/store/authStore';
 import { wordApi } from '../../src/services/api';
 import { useTheme } from '../../src/contexts/ThemeContext';
+import { useLocalization } from '../../src/contexts/LocalizationContext';
 import { SPACING, FONT_SIZES, SHADOWS } from '../../src/constants/theme';
 import { format, parseISO } from 'date-fns';
 
