@@ -1,12 +1,56 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { COLORS } from '../constants/theme';
+
+interface ThemeColors {
+  primary: string;
+  background: string;
+  white: string;
+  black: string;
+  accent: string;
+  textPrimary: string;
+  textSecondary: string;
+  textMuted: string;
+  border: string;
+  borderLight: string;
+  success: string;
+  error: string;
+}
 
 interface ThemeContextType {
   isDarkMode: boolean;
   toggleTheme: () => void;
-  colors: typeof COLORS;
+  colors: ThemeColors;
 }
+
+const lightColors: ThemeColors = {
+  primary: '#000000',
+  background: '#F5F5F5',
+  white: '#FFFFFF',
+  black: '#000000',
+  accent: '#FF6B6B',
+  textPrimary: '#000000',
+  textSecondary: '#333333',
+  textMuted: '#999999',
+  border: '#000000',
+  borderLight: '#E0E0E0',
+  success: '#4CAF50',
+  error: '#F44336',
+};
+
+const darkColors: ThemeColors = {
+  primary: '#FFFFFF',
+  background: '#121212',
+  white: '#1E1E1E',
+  black: '#FFFFFF',
+  accent: '#00D9FF',
+  textPrimary: '#FFFFFF',
+  textSecondary: '#B0B0B0',
+  textMuted: '#707070',
+  border: '#FFFFFF',
+  borderLight: '#2A2A2A',
+  success: '#4CAF50',
+  error: '#F44336',
+};
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
@@ -38,23 +82,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
-  const colors = isDarkMode
-    ? {
-        // Dark mode colors
-        primary: '#FFFFFF',
-        background: '#121212',
-        white: '#1E1E1E',
-        black: '#FFFFFF',
-        accent: '#00D9FF',
-        textPrimary: '#FFFFFF',
-        textSecondary: '#B0B0B0',
-        textMuted: '#808080',
-        border: '#333333',
-        borderLight: '#2A2A2A',
-        success: '#4CAF50',
-        error: '#F44336',
-      }
-    : COLORS; // Light mode uses existing theme
+  const colors = isDarkMode ? darkColors : lightColors;
 
   return (
     <ThemeContext.Provider value={{ isDarkMode, toggleTheme, colors }}>
