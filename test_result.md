@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Build FluentStory - a complete language learning mobile app with AI story generation, tappable word translation, personal dictionary, and spaced repetition review system"
+user_problem_statement: "Build FluentStory - a complete language learning mobile app with AI story generation, tappable word translation, personal dictionary, spaced repetition review system. UPDATES: Add Groups tab to group words by day of week, add multilingual tips on first launch, add feedback collection widget with best UX practices"
 
 backend:
   - task: "User Registration API"
