@@ -31,6 +31,7 @@ interface Story {
 export default function ProfileScreen() {
   const router = useRouter();
   const { user, logout, updateUser, refreshUser } = useAuthStore();
+  const { isDarkMode, toggleTheme, colors } = useTheme();
   
   const [stories, setStories] = useState<Story[]>([]);
   const [isLoading, setIsLoading] = useState(true);
