@@ -633,6 +633,21 @@ async def health_check():
 
 # ============= TEXT-TO-SPEECH ENDPOINT =============
 
+class FeedbackCreate(BaseModel):
+    rating: Optional[int] = None  # 1-5 stars
+    message: str
+    category: Optional[str] = None  # bug, feature, improvement, other
+    user_context: Optional[Dict[str, Any]] = None  # app state when feedback given
+
+class FeedbackResponse(BaseModel):
+    id: str
+    user_id: str
+    rating: Optional[int]
+    message: str
+    category: Optional[str]
+    user_context: Optional[Dict[str, Any]]
+    created_at: str
+
 class TTSRequest(BaseModel):
     text: str
     voice: str = "alloy"  # alloy, echo, fable, onyx, nova, shimmer
