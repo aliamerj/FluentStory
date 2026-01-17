@@ -144,40 +144,40 @@ export default function ProfileScreen() {
         </View>
 
         {/* Learning Settings */}
-        <Text style={styles.sectionTitle}>LEARNING SETTINGS</Text>
-        <Card style={styles.settingsCard}>
+        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>LEARNING SETTINGS</Text>
+        <Card style={[styles.settingsCard, { backgroundColor: colors.white, borderColor: colors.border }]}>
           <View style={styles.settingRow}>
             <View style={styles.settingLeft}>
-              <View style={styles.settingIcon}>
+              <View style={[styles.settingIcon, { backgroundColor: colors.accent, borderColor: colors.border }]}>
                 <Ionicons name="globe-outline" size={20} color={COLORS.white} />
               </View>
               <View style={styles.settingText}>
-                <Text style={styles.settingLabel}>NATIVE LANGUAGE</Text>
-                <Text style={styles.settingValue}>{user?.native_language}</Text>
+                <Text style={[styles.settingLabel, { color: colors.textMuted }]}>NATIVE LANGUAGE</Text>
+                <Text style={[styles.settingValue, { color: colors.textPrimary }]}>{user?.native_language}</Text>
               </View>
             </View>
           </View>
           
           <View style={styles.settingRow}>
             <View style={styles.settingLeft}>
-              <View style={styles.settingIcon}>
+              <View style={[styles.settingIcon, { backgroundColor: colors.accent, borderColor: colors.border }]}>
                 <Ionicons name="school-outline" size={20} color={COLORS.white} />
               </View>
               <View style={styles.settingText}>
-                <Text style={styles.settingLabel}>LEARNING</Text>
-                <Text style={styles.settingValue}>{user?.target_language}</Text>
+                <Text style={[styles.settingLabel, { color: colors.textMuted }]}>LEARNING</Text>
+                <Text style={[styles.settingValue, { color: colors.textPrimary }]}>{user?.target_language}</Text>
               </View>
             </View>
           </View>
           
           <View style={[styles.settingRow, styles.settingRowLast]}>
             <View style={styles.settingLeft}>
-              <View style={styles.settingIcon}>
+              <View style={[styles.settingIcon, { backgroundColor: colors.accent, borderColor: colors.border }]}>
                 <Ionicons name="trending-up-outline" size={20} color={COLORS.white} />
               </View>
               <View style={styles.settingText}>
-                <Text style={styles.settingLabel}>LEVEL</Text>
-                <Text style={styles.settingValue}>{user?.proficiency_level}</Text>
+                <Text style={[styles.settingLabel, { color: colors.textMuted }]}>LEVEL</Text>
+                <Text style={[styles.settingValue, { color: colors.textPrimary }]}>{user?.proficiency_level}</Text>
               </View>
             </View>
           </View>
