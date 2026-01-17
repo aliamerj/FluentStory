@@ -11,10 +11,12 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuthStore } from '../../src/store/authStore';
 import { statsApi, storyApi, reviewApi } from '../../src/services/api';
 import { Card } from '../../src/components/Card';
 import { Button } from '../../src/components/Button';
+import { TipsModal } from '../../src/components/TipsModal';
 import { COLORS, SPACING, FONT_SIZES, SHADOWS } from '../../src/constants/theme';
 
 interface Stats {
