@@ -3,6 +3,7 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { View, StyleSheet } from 'react-native';
 import { useAuthStore } from '../src/store/authStore';
+import { ThemeProvider } from '../src/contexts/ThemeContext';
 import { COLORS } from '../src/constants/theme';
 
 export default function RootLayout() {
@@ -13,25 +14,27 @@ export default function RootLayout() {
   }, []);
 
   return (
-    <View style={styles.container}>
-      <StatusBar style="light" />
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: COLORS.background },
-          animation: 'slide_from_right',
-        }}
-      >
-        <Stack.Screen name="index" />
-        <Stack.Screen name="(auth)" />
-        <Stack.Screen name="(onboarding)" />
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="story/[id]" options={{ presentation: 'card' }} />
-        <Stack.Screen name="generate" options={{ presentation: 'modal' }} />
-        <Stack.Screen name="review" options={{ presentation: 'card' }} />
-        <Stack.Screen name="group-detail" options={{ presentation: 'card' }} />
-      </Stack>
-    </View>
+    <ThemeProvider>
+      <View style={styles.container}>
+        <StatusBar style="light" />
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: COLORS.background },
+            animation: 'slide_from_right',
+          }}
+        >
+          <Stack.Screen name="index" />
+          <Stack.Screen name="(auth)" />
+          <Stack.Screen name="(onboarding)" />
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="story/[id]" options={{ presentation: 'card' }} />
+          <Stack.Screen name="generate" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="review" options={{ presentation: 'card' }} />
+          <Stack.Screen name="group-detail" options={{ presentation: 'card' }} />
+        </Stack>
+      </View>
+    </ThemeProvider>
   );
 }
 
