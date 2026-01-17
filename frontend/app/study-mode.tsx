@@ -137,7 +137,7 @@ export default function StudyModeScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.closeButton}>
-          <Ionicons name=\"close\" size={28} color={colors.textPrimary} />
+          <Ionicons name="close" size={28} color={colors.textPrimary} />
         </TouchableOpacity>
         <Text style={[styles.progress, { color: colors.textMuted }]}>
           {currentIndex + 1} / {wordQueue.length}
