@@ -34,12 +34,14 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { user, logout, updateUser, refreshUser } = useAuthStore();
   const { isDarkMode, toggleTheme, colors } = useTheme();
+  const { language, setLanguage, t } = useLocalization();
   
   const [stories, setStories] = useState<Story[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [notifications, setNotifications] = useState(true);
   const [feedbackModalVisible, setFeedbackModalVisible] = useState(false);
+  const [languageModalVisible, setLanguageModalVisible] = useState(false);
 
   const loadData = async () => {
     if (!user) return;
