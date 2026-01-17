@@ -115,7 +115,7 @@ export default function StudyModeScreen() {
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
         <View style={styles.completeContainer}>
           <View style={[styles.completeIcon, { backgroundColor: color }]}>
-            <Ionicons name=\"checkmark-circle\" size={80} color=\"#FFFFFF\" />
+            <Ionicons name="checkmark-circle" size={80} color="#FFFFFF" />
           </View>
           <Text style={[styles.completeTitle, { color: colors.textPrimary }]}>{t.studyComplete}</Text>
           <Text style={[styles.completeText, { color: colors.textMuted }]}>
