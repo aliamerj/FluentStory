@@ -17,6 +17,7 @@ import { statsApi, storyApi } from '../../src/services/api';
 import { Card } from '../../src/components/Card';
 import { Button } from '../../src/components/Button';
 import { FeedbackModal } from '../../src/components/FeedbackModal';
+import { useTheme } from '../../src/contexts/ThemeContext';
 import { COLORS, SPACING, FONT_SIZES, SHADOWS } from '../../src/constants/theme';
 
 interface Story {
