@@ -184,33 +184,33 @@ export default function ProfileScreen() {
         </Card>
 
         {/* App Settings */}
-        <Text style={styles.sectionTitle}>APP SETTINGS</Text>
-        <Card style={styles.settingsCard}>
+        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>APP SETTINGS</Text>
+        <Card style={[styles.settingsCard, { backgroundColor: colors.white, borderColor: colors.border }]}>
           <View style={styles.settingRow}>
             <View style={styles.settingLeft}>
-              <View style={styles.settingIcon}>
+              <View style={[styles.settingIcon, { backgroundColor: colors.accent, borderColor: colors.border }]}>
                 <Ionicons name={isDarkMode ? "moon" : "sunny"} size={20} color={COLORS.white} />
               </View>
-              <Text style={styles.settingLabel}>DARK MODE</Text>
+              <Text style={[styles.settingLabel, { color: colors.textPrimary }]}>DARK MODE</Text>
             </View>
             <Switch
               value={isDarkMode}
               onValueChange={toggleTheme}
-              trackColor={{ false: COLORS.borderLight, true: COLORS.accent }}
+              trackColor={{ false: colors.borderLight, true: colors.accent }}
               thumbColor={COLORS.white}
             />
           </View>
           <View style={[styles.settingRow, styles.settingRowLast]}>
             <View style={styles.settingLeft}>
-              <View style={styles.settingIcon}>
+              <View style={[styles.settingIcon, { backgroundColor: colors.accent, borderColor: colors.border }]}>
                 <Ionicons name="notifications-outline" size={20} color={COLORS.white} />
               </View>
-              <Text style={styles.settingLabel}>NOTIFICATIONS</Text>
+              <Text style={[styles.settingLabel, { color: colors.textPrimary }]}>NOTIFICATIONS</Text>
             </View>
             <Switch
               value={notifications}
               onValueChange={setNotifications}
-              trackColor={{ false: COLORS.borderLight, true: COLORS.accent }}
+              trackColor={{ false: colors.borderLight, true: colors.accent }}
               thumbColor={COLORS.white}
             />
           </View>
