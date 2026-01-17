@@ -342,7 +342,7 @@ export default function HomeScreen() {
         {recentStories.length > 0 && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>RECENT STORIES</Text>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t.recentStories}</Text>
             </View>
 
             {recentStories.map((story) => (
