@@ -19,7 +19,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#6366f1"
+        "backgroundColor": "#FF4500"
       },
       "edgeToEdgeEnabled": true,
       "package": "com.fluentstory.app",
@@ -41,14 +41,14 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#6366f1"
+          "backgroundColor": "#FF4500"
         }
       ],
       [
         "expo-notifications",
         {
           "icon": "./assets/images/icon.png",
-          "color": "#6366f1"
+          "color": "#FF4500"
         }
       ]
     ],
