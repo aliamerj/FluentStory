@@ -1,363 +1,251 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-  RefreshControl,
-  ActivityIndicator,
-} from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import * as Speech from 'expo-speech';
 import { useAuthStore } from '../../src/store/authStore';
-import { reviewApi } from '../../src/services/api';
-import { Button } from '../../src/components/Button';
-import { Card } from '../../src/components/Card';
-import { COLORS, SPACING, FONT_SIZES, SHADOWS } from '../../src/constants/theme';
+import { reviewApi, storyApi } from '../../src/services/api';
+import { useTheme } from '../../src/contexts/ThemeContext';
+import { SPACING, FONT_SIZES, SHADOWS } from '../../src/constants/theme';
+import { format, parseISO } from 'date-fns';
 
-interface Word {
+interface ReviewWord {
   id: string;
   word: string;
   translation: string;
   context_sentence: string;
-  mastery_level: number;
 }
 
-export default function ReviewTabScreen() {
+interface Story {
+  id: string;
+  title: string;
+  content: string;
+  created_at: string;
+}
+
+export default function ReviewScreen() {
   const router = useRouter();
   const { user } = useAuthStore();
+  const { colors } = useTheme();
   
-  const [dueWords, setDueWords] = useState<Word[]>([]);
+  const [dueWords, setDueWords] = useState<ReviewWord[]>([]);
+  const [recentStories, setRecentStories] = useState<Story[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [showAnswer, setShowAnswer] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
 
-  const loadDueReviews = async () => {
+  useEffect(() => {
+    loadData();
+  }, [user]);
+
+  const loadData = async () => {
     if (!user) return;
-    
     try {
-      const response = await reviewApi.getDue(user.id);
-      setDueWords(response.data.words);
+      const [reviewRes, storiesRes] = await Promise.all([
+        reviewApi.getDue(user.id),
+        storyApi.getAll(user.id, 5),
+      ]);
+      setDueWords(reviewRes.data);
+      setRecentStories(storiesRes.data);
     } catch (error) {
-      console.error('Failed to load reviews:', error);
+      console.error('Failed to load data:', error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await loadDueReviews();
-    setRefreshing(false);
-  }, [user]);
+  const handleSpeak = async (text: string) => {
+    if (isSpeaking) return;
+    setIsSpeaking(true);
+    try {
+      await Speech.speak(text, {
+        language: 'es-ES',
+        rate: 0.75,
+        onDone: () => setIsSpeaking(false),
+        onError: () => setIsSpeaking(false),
+      });
+    } catch (error) {
+      console.error('Speech error:', error);
+      setIsSpeaking(false);
+    }
+  };
 
-  useEffect(() => {
-    loadDueReviews();
-  }, [user]);
+  const handleAnswer = async (correct: boolean) => {
+    const currentWord = dueWords[currentIndex];
+    try {
+      await reviewApi.submit(currentWord.id, correct);
+      if (currentIndex < dueWords.length - 1) {
+        setCurrentIndex(currentIndex + 1);
+        setShowAnswer(false);
+      } else {
+        setDueWords([]);
+        setCurrentIndex(0);
+      }
+    } catch (error) {
+      console.error('Failed to submit review:', error);
+    }
+  };
 
   if (isLoading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={COLORS.black} />
-        <Text style={styles.loadingText}>LOADING REVIEWS...</Text>
+      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.accent} />
       </View>
     );
   }
 
+  const currentWord = dueWords[currentIndex];
+
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor={COLORS.black}
-          />
-        }
-      >
-        <View style={styles.header}>
-          <Text style={styles.title}>REVIEW</Text>
-          <Text style={styles.subtitle}>PRACTICE YOUR VOCABULARY</Text>
-        </View>
-
-        {dueWords.length > 0 ? (
-          <>
-            <View style={styles.reviewCard}>
-              <View style={styles.reviewHeader}>
-                <View style={styles.flashIcon}>
-                  <Ionicons name="flash" size={32} color={COLORS.white} />
-                </View>
-                <Text style={styles.reviewCount}>{dueWords.length}</Text>
-              </View>
-              <Text style={styles.reviewTitle}>WORDS READY</Text>
-              <Text style={styles.reviewSubtitle}>FOR REVIEW</Text>
-              <Button
-                title="START REVIEW"
-                onPress={() => router.push('/review')}
-                fullWidth
-                size="lg"
-                variant="accent"
-                style={{ marginTop: SPACING.lg }}
-              />
-            </View>
-
-            <Text style={styles.sectionTitle}>WORDS TO REVIEW</Text>
-            {dueWords.slice(0, 5).map((word) => (
-              <View key={word.id} style={styles.wordPreview}>
-                <View style={styles.wordInfo}>
-                  <Text style={styles.wordText}>{word.word.toUpperCase()}</Text>
-                  <Text style={styles.wordTranslation}>{word.translation}</Text>
-                </View>
-                <View style={styles.masteryBadge}>
-                  <Text style={styles.masteryText}>{word.mastery_level}/8</Text>
-                </View>
-              </View>
-            ))}
-            {dueWords.length > 5 && (
-              <Text style={styles.moreWords}>+{dueWords.length - 5} MORE WORDS</Text>
-            )}
-          </>
-        ) : (
-          <View style={styles.emptyCard}>
-            <View style={styles.checkIcon}>
-              <Ionicons name="checkmark" size={48} color={COLORS.white} />
-            </View>
-            <Text style={styles.emptyTitle}>ALL CAUGHT UP!</Text>
-            <Text style={styles.emptyText}>
-              No words due for review right now. Keep reading stories to add more words!
-            </Text>
-            <Button
-              title="GENERATE STORY"
-              onPress={() => router.push('/generate')}
-              variant="outline"
-              style={{ marginTop: SPACING.lg }}
-            />
-          </View>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+      <View style={styles.header}>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>REVIEW</Text>
+        {dueWords.length > 0 && (
+          <Text style={[styles.subtitle, { color: colors.textMuted }]}>
+            {currentIndex + 1} / {dueWords.length}
+          </Text>
         )}
+      </View>
 
-        {/* How Review Works */}
-        <Card style={styles.infoCard}>
-          <Text style={styles.infoTitle}>HOW SPACED REPETITION WORKS</Text>
-          <View style={styles.infoItem}>
-            <View style={styles.infoNumber}>
-              <Text style={styles.infoNumberText}>1</Text>
+      {dueWords.length > 0 && currentWord ? (
+        <View style={styles.content}>
+          {/* Review Card */}
+          <View style={[styles.reviewCard, { backgroundColor: colors.white, borderColor: colors.border }]}>
+            <View style={[styles.wordContainer, { backgroundColor: colors.accent }]}>
+              <Text style={styles.wordText}>{currentWord.word.toUpperCase()}</Text>
+              <TouchableOpacity
+                style={styles.speakButton}
+                onPress={() => handleSpeak(currentWord.word)}
+                disabled={isSpeaking}
+              >
+                {isSpeaking ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Ionicons name="volume-high" size={24} color="#FFFFFF" />
+                )}
+              </TouchableOpacity>
             </View>
-            <Text style={styles.infoText}>
-              Words are reviewed at increasing intervals: 1, 3, 7, 14, 30, 90, 150, 365 days
-            </Text>
+
+            {showAnswer && (
+              <View style={styles.answerContainer}>
+                <Text style={[styles.translation, { color: colors.textPrimary }]}>{currentWord.translation}</Text>
+                {currentWord.context_sentence && (
+                  <Text style={[styles.context, { color: colors.textMuted }]}>
+                    "{currentWord.context_sentence}"
+                  </Text>
+                )}
+              </View>
+            )}
+
+            {!showAnswer ? (
+              <TouchableOpacity
+                style={[styles.showButton, { backgroundColor: colors.white, borderColor: colors.border }]}
+                onPress={() => setShowAnswer(true)}
+              >
+                <Text style={[styles.showButtonText, { color: colors.accent }]}>SHOW ANSWER</Text>
+              </TouchableOpacity>
+            ) : (
+              <View style={styles.buttonContainer}>
+                <TouchableOpacity
+                  style={[styles.answerButton, styles.wrongButton]}
+                  onPress={() => handleAnswer(false)}
+                >
+                  <Ionicons name="close" size={24} color="#FFFFFF" />
+                  <Text style={styles.answerButtonText}>WRONG</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.answerButton, styles.correctButton]}
+                  onPress={() => handleAnswer(true)}
+                >
+                  <Ionicons name="checkmark" size={24} color="#FFFFFF" />
+                  <Text style={styles.answerButtonText}>CORRECT</Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
-          <View style={styles.infoItem}>
-            <View style={styles.infoNumber}>
-              <Text style={styles.infoNumberText}>2</Text>
+
+          {/* Progress Bar */}
+          <View style={[styles.progressBarContainer, { backgroundColor: colors.borderLight }]}>
+            <View style={[styles.progressBar, { width: `${((currentIndex + 1) / dueWords.length) * 100}%`, backgroundColor: colors.accent }]} />
+          </View>
+        </View>
+      ) : (
+        <View style={styles.content}>
+          {/* No Reviews */}
+          <View style={[styles.emptyCard, { backgroundColor: colors.white, borderColor: colors.border }]}>
+            <View style={[styles.emptyIcon, { backgroundColor: colors.accent }]}>
+              <Ionicons name="checkmark-circle" size={64} color="#FFFFFF" />
             </View>
-            <Text style={styles.infoText}>
-              Correct answers advance the word. Wrong answers reset to level 1.
-            </Text>
+            <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>ALL CAUGHT UP!</Text>
+            <Text style={[styles.emptyText, { color: colors.textMuted }]}>No words due for review right now</Text>
           </View>
-          <View style={styles.infoItem}>
-            <View style={styles.infoNumber}>
-              <Text style={styles.infoNumberText}>3</Text>
+
+          {/* Recent Stories */}
+          {recentStories.length > 0 && (
+            <View style={styles.storiesSection}>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>RECENT STORIES</Text>
+              {recentStories.map((story) => (
+                <TouchableOpacity
+                  key={story.id}
+                  style={[styles.storyCard, { backgroundColor: colors.white, borderColor: colors.border }]}
+                  onPress={() => router.push(`/story/${story.id}`)}
+                >
+                  <View style={[styles.storyIcon, { backgroundColor: colors.accent }]}>
+                    <Ionicons name="book-outline" size={20} color="#FFFFFF" />
+                  </View>
+                  <View style={styles.storyInfo}>
+                    <Text style={[styles.storyTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+                      {story.title}
+                    </Text>
+                    <Text style={[styles.storyDate, { color: colors.textMuted }]}>
+                      {format(parseISO(story.created_at), 'MMM d, yyyy')}
+                    </Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+                </TouchableOpacity>
+              ))}
             </View>
-            <Text style={styles.infoText}>
-              After 8 successful reviews, the word is MASTERED!
-            </Text>
-          </View>
-        </Card>
-      </ScrollView>
+          )}
+        </View>
+      )}
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: COLORS.background,
-  },
-  loadingText: {
-    marginTop: SPACING.md,
-    fontSize: FONT_SIZES.sm,
-    color: COLORS.textSecondary,
-    fontWeight: '700',
-    letterSpacing: 2,
-  },
-  scrollContent: {
-    padding: SPACING.lg,
-    paddingBottom: SPACING.xxl,
-  },
-  header: {
-    marginBottom: SPACING.lg,
-  },
-  title: {
-    fontSize: FONT_SIZES.xxl,
-    fontWeight: '900',
-    color: COLORS.black,
-    letterSpacing: 2,
-  },
-  subtitle: {
-    fontSize: FONT_SIZES.xs,
-    color: COLORS.textSecondary,
-    marginTop: SPACING.xs,
-    fontWeight: '600',
-    letterSpacing: 1,
-  },
-  reviewCard: {
-    backgroundColor: COLORS.black,
-    padding: SPACING.xl,
-    alignItems: 'center',
-    marginBottom: SPACING.lg,
-    ...SHADOWS.md,
-  },
-  reviewHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.md,
-  },
-  flashIcon: {
-    width: 56,
-    height: 56,
-    backgroundColor: COLORS.accent,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  reviewCount: {
-    fontSize: FONT_SIZES.hero,
-    fontWeight: '900',
-    color: COLORS.white,
-  },
-  reviewTitle: {
-    fontSize: FONT_SIZES.xl,
-    fontWeight: '900',
-    color: COLORS.white,
-    marginTop: SPACING.md,
-    letterSpacing: 2,
-  },
-  reviewSubtitle: {
-    fontSize: FONT_SIZES.sm,
-    color: COLORS.textLight,
-    fontWeight: '600',
-    letterSpacing: 1,
-  },
-  sectionTitle: {
-    fontSize: FONT_SIZES.sm,
-    fontWeight: '900',
-    color: COLORS.black,
-    marginBottom: SPACING.md,
-    letterSpacing: 2,
-  },
-  wordPreview: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: COLORS.white,
-    borderWidth: 2,
-    borderColor: COLORS.black,
-    padding: SPACING.md,
-    marginBottom: SPACING.sm,
-  },
-  wordInfo: {
-    flex: 1,
-  },
-  wordText: {
-    fontSize: FONT_SIZES.md,
-    fontWeight: '900',
-    color: COLORS.black,
-    letterSpacing: 1,
-  },
-  wordTranslation: {
-    fontSize: FONT_SIZES.sm,
-    color: COLORS.textSecondary,
-    marginTop: 2,
-  },
-  masteryBadge: {
-    backgroundColor: COLORS.accent,
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: SPACING.xs,
-  },
-  masteryText: {
-    fontSize: FONT_SIZES.xs,
-    fontWeight: '700',
-    color: COLORS.white,
-    letterSpacing: 1,
-  },
-  moreWords: {
-    fontSize: FONT_SIZES.sm,
-    color: COLORS.textMuted,
-    textAlign: 'center',
-    marginTop: SPACING.sm,
-    marginBottom: SPACING.lg,
-    fontWeight: '600',
-    letterSpacing: 1,
-  },
-  emptyCard: {
-    backgroundColor: COLORS.white,
-    borderWidth: 2,
-    borderColor: COLORS.black,
-    padding: SPACING.xl,
-    alignItems: 'center',
-    marginBottom: SPACING.lg,
-  },
-  checkIcon: {
-    width: 80,
-    height: 80,
-    backgroundColor: COLORS.success,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  emptyTitle: {
-    fontSize: FONT_SIZES.xl,
-    fontWeight: '900',
-    color: COLORS.black,
-    marginTop: SPACING.md,
-    letterSpacing: 2,
-  },
-  emptyText: {
-    fontSize: FONT_SIZES.sm,
-    color: COLORS.textSecondary,
-    textAlign: 'center',
-    marginTop: SPACING.sm,
-    lineHeight: 20,
-  },
-  infoCard: {
-    marginTop: SPACING.md,
-  },
-  infoTitle: {
-    fontSize: FONT_SIZES.sm,
-    fontWeight: '900',
-    color: COLORS.black,
-    marginBottom: SPACING.lg,
-    letterSpacing: 1,
-  },
-  infoItem: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: SPACING.md,
-    gap: SPACING.md,
-  },
-  infoNumber: {
-    width: 28,
-    height: 28,
-    backgroundColor: COLORS.black,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  infoNumberText: {
-    fontSize: FONT_SIZES.sm,
-    fontWeight: '900',
-    color: COLORS.white,
-  },
-  infoText: {
-    flex: 1,
-    fontSize: FONT_SIZES.sm,
-    color: COLORS.textSecondary,
-    lineHeight: 20,
-  },
+  container: { flex: 1 },
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: SPACING.lg, paddingBottom: SPACING.md },
+  title: { fontSize: FONT_SIZES.xxl, fontWeight: '900', letterSpacing: 2 },
+  subtitle: { fontSize: FONT_SIZES.lg, fontWeight: '700', letterSpacing: 1 },
+  content: { flex: 1, padding: SPACING.lg },
+  reviewCard: { borderRadius: 24, borderWidth: 3, overflow: 'hidden', ...SHADOWS.large },
+  wordContainer: { padding: SPACING.xxl, alignItems: 'center', gap: SPACING.md },
+  wordText: { fontSize: 48, fontWeight: '900', color: '#FFFFFF', letterSpacing: 2, textAlign: 'center' },
+  speakButton: { padding: SPACING.md },
+  answerContainer: { padding: SPACING.xl, gap: SPACING.md },
+  translation: { fontSize: FONT_SIZES.xxl, fontWeight: '700', textAlign: 'center' },
+  context: { fontSize: FONT_SIZES.md, fontWeight: '600', fontStyle: 'italic', textAlign: 'center', lineHeight: 24 },
+  showButton: { margin: SPACING.xl, padding: SPACING.lg, borderRadius: 12, borderWidth: 3, alignItems: 'center' },
+  showButtonText: { fontSize: FONT_SIZES.lg, fontWeight: '900', letterSpacing: 1.5 },
+  buttonContainer: { flexDirection: 'row', gap: SPACING.md, padding: SPACING.xl },
+  answerButton: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: SPACING.lg, borderRadius: 12, borderWidth: 3, borderColor: '#000', gap: SPACING.sm },
+  wrongButton: { backgroundColor: '#F44336' },
+  correctButton: { backgroundColor: '#4CAF50' },
+  answerButtonText: { fontSize: FONT_SIZES.md, fontWeight: '900', color: '#FFFFFF', letterSpacing: 1 },
+  progressBarContainer: { height: 8, borderRadius: 4, borderWidth: 2, borderColor: '#000', overflow: 'hidden', marginTop: SPACING.xl },
+  progressBar: { height: '100%' },
+  emptyCard: { padding: SPACING.xxl, borderRadius: 24, borderWidth: 3, alignItems: 'center', ...SHADOWS.large },
+  emptyIcon: { width: 120, height: 120, borderRadius: 60, justifyContent: 'center', alignItems: 'center', marginBottom: SPACING.xl },
+  emptyTitle: { fontSize: FONT_SIZES.xxl, fontWeight: '900', letterSpacing: 2, marginBottom: SPACING.md },
+  emptyText: { fontSize: FONT_SIZES.lg, fontWeight: '600', textAlign: 'center' },
+  storiesSection: { marginTop: SPACING.xxl },
+  sectionTitle: { fontSize: FONT_SIZES.lg, fontWeight: '900', letterSpacing: 1.5, marginBottom: SPACING.md },
+  storyCard: { flexDirection: 'row', alignItems: 'center', padding: SPACING.md, borderRadius: 12, borderWidth: 3, marginBottom: SPACING.sm, ...SHADOWS.small },
+  storyIcon: { width: 40, height: 40, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginRight: SPACING.md },
+  storyInfo: { flex: 1 },
+  storyTitle: { fontSize: FONT_SIZES.md, fontWeight: '700', marginBottom: SPACING.xs / 2 },
+  storyDate: { fontSize: FONT_SIZES.xs, fontWeight: '600' },
 });
