@@ -17,6 +17,7 @@ import { statsApi, storyApi, reviewApi, wordApi } from '../../src/services/api';
 import { TipsModal } from '../../src/components/TipsModal';
 import { FeedbackModal } from '../../src/components/FeedbackModal';
 import { useTheme } from '../../src/contexts/ThemeContext';
+import { useLocalization } from '../../src/contexts/LocalizationContext';
 import { SPACING, FONT_SIZES, SHADOWS } from '../../src/constants/theme';
 import { format, parseISO } from 'date-fns';
 
