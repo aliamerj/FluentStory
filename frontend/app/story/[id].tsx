@@ -15,7 +15,8 @@ import * as Speech from 'expo-speech';
 import { useAuthStore } from '../../src/store/authStore';
 import { storyApi, wordApi } from '../../src/services/api';
 import { WordModal } from '../../src/components/WordModal';
-import { COLORS, SPACING, FONT_SIZES, SHADOWS } from '../../src/constants/theme';
+import { useTheme } from '../../src/contexts/ThemeContext';
+import { SPACING, FONT_SIZES, SHADOWS } from '../../src/constants/theme';
 
 interface Story {
   id: string;
