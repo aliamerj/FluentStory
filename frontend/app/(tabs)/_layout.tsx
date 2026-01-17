@@ -8,6 +8,7 @@ import { COLORS, FONT_SIZES, SPACING } from '../../src/constants/theme';
 
 export default function TabsLayout() {
   const { colors } = useTheme();
+  const { t } = useLocalization();
 
   return (
     <Tabs
