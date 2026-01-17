@@ -98,6 +98,13 @@ export const SHADOWS = {
     shadowRadius: 0,
     elevation: 2,
   },
+  small: {
+    shadowColor: '#050505',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 2,
+  },
   md: {
     shadowColor: '#050505',
     shadowOffset: { width: 4, height: 4 },
@@ -105,7 +112,21 @@ export const SHADOWS = {
     shadowRadius: 0,
     elevation: 4,
   },
+  medium: {
+    shadowColor: '#050505',
+    shadowOffset: { width: 4, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 4,
+  },
   lg: {
+    shadowColor: '#050505',
+    shadowOffset: { width: 6, height: 6 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 6,
+  },
+  large: {
     shadowColor: '#050505',
     shadowOffset: { width: 6, height: 6 },
     shadowOpacity: 1,
