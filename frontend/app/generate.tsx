@@ -87,26 +87,31 @@ export default function GenerateScreen() {
 
           <View style={[styles.section, { backgroundColor: colors.white, borderColor: colors.border }]}>
             <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>LANGUAGE</Text>
-            <View style={styles.optionsGrid}>
-              {LANGUAGES.slice(0, 6).map((lang) => (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.languageScroll}>
+              {LANGUAGES.map((lang) => (
                 <TouchableOpacity
                   key={lang.name}
                   style={[
-                    styles.optionCard,
+                    styles.languageCard,
                     { backgroundColor: colors.background, borderColor: colors.border },
                     language === lang.name && { backgroundColor: colors.accent, borderColor: colors.accent },
                   ]}
                   onPress={() => setLanguage(lang.name)}
                 >
-                  <Text style={styles.optionEmoji}>{lang.flag}</Text>
+                  <Text style={styles.languageFlag}>{lang.flag}</Text>
                   <Text style={[
-                    styles.optionText,
+                    styles.languageName,
                     { color: colors.textPrimary },
                     language === lang.name && { color: '#FFFFFF' },
                   ]}>{lang.name}</Text>
+                  <Text style={[
+                    styles.languageNative,
+                    { color: colors.textMuted },
+                    language === lang.name && { color: 'rgba(255,255,255,0.8)' },
+                  ]}>{lang.nativeName}</Text>
                 </TouchableOpacity>
               ))}
-            </View>
+            </ScrollView>
           </View>
 
           <View style={[styles.section, { backgroundColor: colors.white, borderColor: colors.border }]}>
