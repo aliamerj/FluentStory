@@ -106,12 +106,20 @@ export default function HomeScreen() {
             <Text style={styles.greeting}>HELLO,</Text>
             <Text style={styles.userName}>{user?.email?.split('@')[0]?.toUpperCase() || 'LEARNER'}</Text>
           </View>
-          {stats?.current_streak && stats.current_streak > 0 ? (
-            <View style={styles.streakBadge}>
-              <Ionicons name="flame" size={24} color={COLORS.accent} />
-              <Text style={styles.streakText}>{stats.current_streak}</Text>
-            </View>
-          ) : null}
+          <View style={styles.headerRight}>
+            {stats?.current_streak && stats.current_streak > 0 ? (
+              <View style={styles.streakBadge}>
+                <Ionicons name="flame" size={24} color={COLORS.accent} />
+                <Text style={styles.streakText}>{stats.current_streak}</Text>
+              </View>
+            ) : null}
+            <TouchableOpacity
+              style={styles.profileButton}
+              onPress={() => router.push('/(tabs)/profile')}
+            >
+              <Ionicons name="person" size={24} color={COLORS.white} />
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Hero CTA */}
