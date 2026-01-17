@@ -59,6 +59,7 @@ export default function StoryScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
   const { user } = useAuthStore();
+  const { colors } = useTheme();
 
   const [story, setStory] = useState<Story | null>(null);
   const [savedWords, setSavedWords] = useState<Set<string>>(new Set());
