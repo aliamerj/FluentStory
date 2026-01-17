@@ -2,12 +2,15 @@ import React from 'react';
 import { useEffect } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../src/store/authStore';
-import { COLORS, FONT_SIZES, SPACING } from '../src/constants/theme';
+import { useTheme } from '../src/contexts/ThemeContext';
+import { FONT_SIZES, SPACING, SHADOWS } from '../src/constants/theme';
 
 export default function SplashScreen() {
   const router = useRouter();
   const { isLoading, isAuthenticated, user, loadUser } = useAuthStore();
+  const { colors } = useTheme();
 
   useEffect(() => {
     loadUser();
@@ -28,15 +31,18 @@ export default function SplashScreen() {
   }, [isLoading, isAuthenticated, user]);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.logoContainer}>
-        <View style={styles.logoBox}>
-          <Text style={styles.logoText}>FS</Text>
+        <View style={[styles.logoBox, { backgroundColor: colors.accent, borderColor: colors.border }]}>
+          <Ionicons name="book" size={64} color="#FFFFFF" />
         </View>
-        <Text style={styles.title}>FLUENTSTORY</Text>
-        <Text style={styles.subtitle}>LEARN LANGUAGES THROUGH STORIES</Text>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>FLUENTSTORY</Text>
+        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>LEARN LANGUAGES THROUGH STORIES</Text>
       </View>
-      <ActivityIndicator size="large" color={COLORS.black} style={styles.loader} />
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size="large" color={colors.accent} />
+        <Text style={[styles.loadingText, { color: colors.textMuted }]}>Loading...</Text>
+      </View>
     </View>
   );
 }
@@ -44,7 +50,6 @@ export default function SplashScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -52,32 +57,36 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logoBox: {
-    width: 100,
-    height: 100,
-    backgroundColor: COLORS.black,
+    width: 120,
+    height: 120,
+    borderRadius: 24,
+    borderWidth: 4,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: SPACING.lg,
-  },
-  logoText: {
-    fontSize: FONT_SIZES.title,
-    fontWeight: '900',
-    color: COLORS.white,
+    marginBottom: SPACING.xl,
+    ...SHADOWS.large,
   },
   title: {
-    fontSize: FONT_SIZES.xxl,
+    fontSize: FONT_SIZES.xxxl,
     fontWeight: '900',
-    color: COLORS.black,
     letterSpacing: 4,
+    marginBottom: SPACING.sm,
   },
   subtitle: {
-    fontSize: FONT_SIZES.xs,
-    color: COLORS.textSecondary,
+    fontSize: FONT_SIZES.sm,
     marginTop: SPACING.xs,
     letterSpacing: 2,
-    fontWeight: '600',
+    fontWeight: '700',
+    textAlign: 'center',
   },
-  loader: {
-    marginTop: SPACING.xxl,
+  loaderContainer: {
+    marginTop: SPACING.xxl * 2,
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: SPACING.md,
+    fontSize: FONT_SIZES.sm,
+    fontWeight: '600',
+    letterSpacing: 1,
   },
 });

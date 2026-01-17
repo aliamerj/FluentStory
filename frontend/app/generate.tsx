@@ -8,45 +8,30 @@ import {
   Platform,
   TouchableOpacity,
   ActivityIndicator,
+  TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../src/store/authStore';
 import { storyApi } from '../src/services/api';
-import { Button } from '../src/components/Button';
-import { Dropdown } from '../src/components/Dropdown';
-import { Input } from '../src/components/Input';
-import { COLORS, SPACING, FONT_SIZES, SHADOWS } from '../src/constants/theme';
-import { LANGUAGES, PROFICIENCY_LEVELS, CONTENT_TYPES, TOPICS } from '../src/constants/languages';
+import { useTheme } from '../src/contexts/ThemeContext';
+import { useLocalization } from '../src/contexts/LocalizationContext';
+import { SPACING, FONT_SIZES, SHADOWS } from '../src/constants/theme';
+import { LANGUAGES, PROFICIENCY_LEVELS, TOPICS } from '../src/constants/languages';
 
 export default function GenerateScreen() {
   const router = useRouter();
   const { user, refreshUser } = useAuthStore();
+  const { colors } = useTheme();
+  const { t } = useLocalization();
 
   const [language, setLanguage] = useState(user?.target_language || 'Spanish');
   const [level, setLevel] = useState(user?.proficiency_level || 'Beginner');
-  const [contentType, setContentType] = useState('Story');
   const [topic, setTopic] = useState('Daily Life & Routine');
   const [customTopic, setCustomTopic] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState('');
-
-  const languageOptions = LANGUAGES.map((lang) => ({
-    id: lang.name,
-    label: `${lang.name} (${lang.nativeName})`,
-  }));
-
-  const levelOptions = PROFICIENCY_LEVELS.map((lvl) => ({
-    id: lvl.id,
-    label: lvl.label,
-  }));
-
-  const topicOptions = TOPICS.map((t) => ({
-    id: t.id,
-    label: t.label,
-    icon: t.icon,
-  }));
 
   const handleGenerate = async () => {
     if (!user) return;
@@ -59,7 +44,7 @@ export default function GenerateScreen() {
         language,
         level,
         topic: customTopic || topic,
-        content_type: contentType,
+        content_type: 'Story',
         custom_topic: customTopic || undefined,
       });
 
@@ -72,20 +57,19 @@ export default function GenerateScreen() {
     }
   };
 
-  const storiesRemaining = user?.is_premium ? 'UNLIMITED' : `${5 - (user?.stories_generated_this_month || 0)} LEFT`;
+  const storiesRemaining = user?.is_premium ? '∞' : `${5 - (user?.stories_generated_this_month || 0)}`;
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
       >
-        {/* Header */}
-        <View style={styles.header}>
+        <View style={[styles.header, { borderBottomColor: colors.border }]}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="close" size={28} color={COLORS.black} />
+            <Ionicons name="close" size={28} color={colors.textPrimary} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>GENERATE STORY</Text>
+          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t.generateStory.toUpperCase()}</Text>
           <View style={styles.backButton} />
         </View>
 
@@ -93,260 +77,162 @@ export default function GenerateScreen() {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          {/* Stories Remaining */}
-          <View style={styles.quotaBanner}>
-            <Ionicons name="sparkles" size={18} color={COLORS.white} />
-            <Text style={styles.quotaText}>{storiesRemaining}</Text>
+          <View style={[styles.quotaBanner, { backgroundColor: colors.accent, borderColor: colors.border }]}>
+            <Ionicons name="sparkles" size={24} color="#FFFFFF" />
+            <View style={styles.quotaInfo}>
+              <Text style={styles.quotaLabel}>Stories Remaining</Text>
+              <Text style={styles.quotaValue}>{storiesRemaining}</Text>
+            </View>
+          </View>
+
+          <View style={[styles.section, { backgroundColor: colors.white, borderColor: colors.border }]}>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>LANGUAGE</Text>
+            <View style={styles.optionsGrid}>
+              {LANGUAGES.slice(0, 6).map((lang) => (
+                <TouchableOpacity
+                  key={lang.name}
+                  style={[
+                    styles.optionCard,
+                    { backgroundColor: colors.background, borderColor: colors.border },
+                    language === lang.name && { backgroundColor: colors.accent, borderColor: colors.accent },
+                  ]}
+                  onPress={() => setLanguage(lang.name)}
+                >
+                  <Text style={styles.optionEmoji}>{lang.flag}</Text>
+                  <Text style={[
+                    styles.optionText,
+                    { color: colors.textPrimary },
+                    language === lang.name && { color: '#FFFFFF' },
+                  ]}>{lang.name}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          <View style={[styles.section, { backgroundColor: colors.white, borderColor: colors.border }]}>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>PROFICIENCY LEVEL</Text>
+            <View style={styles.levelContainer}>
+              {PROFICIENCY_LEVELS.map((lvl) => (
+                <TouchableOpacity
+                  key={lvl.id}
+                  style={[
+                    styles.levelButton,
+                    { backgroundColor: colors.background, borderColor: colors.border },
+                    level === lvl.id && { backgroundColor: colors.accent, borderColor: colors.accent },
+                  ]}
+                  onPress={() => setLevel(lvl.id)}
+                >
+                  <Text style={[
+                    styles.levelText,
+                    { color: colors.textPrimary },
+                    level === lvl.id && { color: '#FFFFFF' },
+                  ]}>{lvl.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          <View style={[styles.section, { backgroundColor: colors.white, borderColor: colors.border }]}>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>TOPIC</Text>
+            <View style={styles.topicsGrid}>
+              {TOPICS.map((t) => (
+                <TouchableOpacity
+                  key={t.id}
+                  style={[
+                    styles.topicCard,
+                    { backgroundColor: colors.background, borderColor: colors.border },
+                    topic === t.id && { backgroundColor: colors.accent, borderColor: colors.accent },
+                  ]}
+                  onPress={() => {
+                    setTopic(t.id);
+                    setCustomTopic('');
+                  }}
+                >
+                  <Ionicons name={t.icon as any} size={24} color={topic === t.id ? '#FFFFFF' : colors.textPrimary} />
+                  <Text style={[
+                    styles.topicText,
+                    { color: colors.textPrimary },
+                    topic === t.id && { color: '#FFFFFF' },
+                  ]}>{t.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <Text style={[styles.orText, { color: colors.textMuted }]}>OR WRITE YOUR OWN</Text>
+            <TextInput
+              style={[styles.customInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.textPrimary }]}
+              placeholder="Enter custom topic (optional)..."
+              placeholderTextColor={colors.textMuted}
+              value={customTopic}
+              onChangeText={(text) => {
+                setCustomTopic(text);
+                if (text) setTopic('');
+              }}
+              multiline
+            />
           </View>
 
           {error ? (
-            <View style={styles.errorBox}>
+            <View style={[styles.errorBanner, { backgroundColor: '#F44336', borderColor: colors.border }]}>
+              <Ionicons name="alert-circle" size={20} color="#FFFFFF" />
               <Text style={styles.errorText}>{error}</Text>
             </View>
           ) : null}
-
-          {/* Language Selection */}
-          <Dropdown
-            label="Target Language"
-            options={languageOptions}
-            selectedValue={language}
-            onSelect={setLanguage}
-            placeholder="Select language"
-          />
-
-          {/* Proficiency Level */}
-          <Dropdown
-            label="Proficiency Level"
-            options={levelOptions}
-            selectedValue={level}
-            onSelect={setLevel}
-            placeholder="Select your level"
-          />
-
-          {/* Content Type */}
-          <Text style={styles.label}>CONTENT TYPE</Text>
-          <View style={styles.contentTypeGrid}>
-            {CONTENT_TYPES.map((type) => (
-              <TouchableOpacity
-                key={type.id}
-                style={[
-                  styles.contentTypeCard,
-                  contentType === type.id && styles.contentTypeCardSelected,
-                ]}
-                onPress={() => setContentType(type.id)}
-              >
-                <Ionicons
-                  name={type.icon as any}
-                  size={24}
-                  color={contentType === type.id ? COLORS.white : COLORS.black}
-                />
-                <Text
-                  style={[
-                    styles.contentTypeLabel,
-                    contentType === type.id && styles.contentTypeLabelSelected,
-                  ]}
-                >
-                  {type.label.toUpperCase()}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          {/* Topic Selection */}
-          <Dropdown
-            label="Topic"
-            options={topicOptions}
-            selectedValue={topic}
-            onSelect={(value) => {
-              setTopic(value);
-              setCustomTopic('');
-            }}
-            placeholder="Select a topic"
-          />
-
-          {/* Custom Topic */}
-          <View style={styles.orDivider}>
-            <View style={styles.orLine} />
-            <Text style={styles.orText}>OR</Text>
-            <View style={styles.orLine} />
-          </View>
-
-          <Input
-            label="Custom Topic"
-            placeholder="Write your own topic..."
-            value={customTopic}
-            onChangeText={setCustomTopic}
-            multiline
-            numberOfLines={2}
-          />
-
-          {/* Generate Button */}
-          <Button
-            title={isGenerating ? 'GENERATING...' : 'GENERATE STORY'}
-            onPress={handleGenerate}
-            loading={isGenerating}
-            disabled={isGenerating}
-            fullWidth
-            size="lg"
-            variant="accent"
-            style={styles.generateButton}
-            icon={!isGenerating && <Ionicons name="sparkles" size={20} color={COLORS.white} />}
-          />
-
-          {/* Generation Info */}
-          {isGenerating && (
-            <View style={styles.generatingInfo}>
-              <View style={styles.loadingBox}>
-                <ActivityIndicator size="large" color={COLORS.black} />
-              </View>
-              <Text style={styles.generatingText}>AI IS CREATING YOUR STORY...</Text>
-              <Text style={styles.generatingSubtext}>This may take 15-30 seconds</Text>
-            </View>
-          )}
         </ScrollView>
+
+        <View style={[styles.footer, { backgroundColor: colors.white, borderTopColor: colors.border }]}>
+          <TouchableOpacity
+            style={[
+              styles.generateButton,
+              { backgroundColor: colors.accent, borderColor: colors.border },
+              isGenerating && { opacity: 0.6 },
+            ]}
+            onPress={handleGenerate}
+            disabled={isGenerating || (!topic && !customTopic)}
+          >
+            {isGenerating ? (
+              <ActivityIndicator size="small" color="#FFFFFF" />
+            ) : (
+              <>
+                <Ionicons name="sparkles" size={24} color="#FFFFFF" />
+                <Text style={styles.generateButtonText}>{t.generateStory.toUpperCase()}</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  keyboardView: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.md,
-    borderBottomWidth: 3,
-    borderBottomColor: COLORS.black,
-    backgroundColor: COLORS.white,
-  },
-  backButton: {
-    width: 44,
-    height: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: FONT_SIZES.md,
-    fontWeight: '900',
-    color: COLORS.black,
-    letterSpacing: 2,
-  },
-  scrollContent: {
-    padding: SPACING.lg,
-    paddingBottom: SPACING.xxl,
-  },
-  quotaBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: COLORS.black,
-    padding: SPACING.md,
-    marginBottom: SPACING.lg,
-    gap: SPACING.sm,
-  },
-  quotaText: {
-    fontSize: FONT_SIZES.sm,
-    color: COLORS.white,
-    fontWeight: '700',
-    letterSpacing: 2,
-  },
-  errorBox: {
-    backgroundColor: COLORS.errorLight,
-    borderWidth: 2,
-    borderColor: COLORS.error,
-    padding: SPACING.md,
-    marginBottom: SPACING.md,
-  },
-  errorText: {
-    color: COLORS.error,
-    fontSize: FONT_SIZES.sm,
-    fontWeight: '600',
-  },
-  label: {
-    fontSize: FONT_SIZES.xs,
-    color: COLORS.textSecondary,
-    marginBottom: SPACING.xs,
-    fontWeight: '700',
-    letterSpacing: 1,
-  },
-  contentTypeGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: SPACING.sm,
-    marginBottom: SPACING.md,
-  },
-  contentTypeCard: {
-    width: '48%',
-    backgroundColor: COLORS.white,
-    borderWidth: 2,
-    borderColor: COLORS.black,
-    padding: SPACING.md,
-    alignItems: 'center',
-  },
-  contentTypeCardSelected: {
-    backgroundColor: COLORS.black,
-  },
-  contentTypeLabel: {
-    fontSize: FONT_SIZES.xs,
-    color: COLORS.black,
-    marginTop: SPACING.xs,
-    fontWeight: '700',
-    letterSpacing: 1,
-  },
-  contentTypeLabelSelected: {
-    color: COLORS.white,
-  },
-  orDivider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: SPACING.md,
-  },
-  orLine: {
-    flex: 1,
-    height: 2,
-    backgroundColor: COLORS.black,
-  },
-  orText: {
-    fontSize: FONT_SIZES.xs,
-    color: COLORS.black,
-    fontWeight: '700',
-    letterSpacing: 2,
-    paddingHorizontal: SPACING.md,
-  },
-  generateButton: {
-    marginTop: SPACING.lg,
-  },
-  generatingInfo: {
-    alignItems: 'center',
-    marginTop: SPACING.xl,
-    gap: SPACING.md,
-  },
-  loadingBox: {
-    width: 80,
-    height: 80,
-    backgroundColor: COLORS.white,
-    borderWidth: 3,
-    borderColor: COLORS.black,
-    justifyContent: 'center',
-    alignItems: 'center',
-    ...SHADOWS.md,
-  },
-  generatingText: {
-    fontSize: FONT_SIZES.md,
-    color: COLORS.black,
-    fontWeight: '900',
-    letterSpacing: 1,
-  },
-  generatingSubtext: {
-    fontSize: FONT_SIZES.sm,
-    color: COLORS.textSecondary,
-  },
+  container: { flex: 1 },
+  keyboardView: { flex: 1 },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: SPACING.lg, borderBottomWidth: 3 },
+  backButton: { width: 40, height: 40, justifyContent: 'center', alignItems: 'center' },
+  headerTitle: { fontSize: FONT_SIZES.xl, fontWeight: '900', letterSpacing: 2 },
+  scrollContent: { padding: SPACING.lg },
+  quotaBanner: { flexDirection: 'row', alignItems: 'center', padding: SPACING.lg, borderRadius: 16, borderWidth: 3, marginBottom: SPACING.lg, ...SHADOWS.medium },
+  quotaInfo: { marginLeft: SPACING.md, flex: 1 },
+  quotaLabel: { fontSize: FONT_SIZES.xs, fontWeight: '700', color: '#FFFFFF', opacity: 0.8, letterSpacing: 1 },
+  quotaValue: { fontSize: FONT_SIZES.xxl, fontWeight: '900', color: '#FFFFFF', letterSpacing: 2 },
+  section: { padding: SPACING.lg, borderRadius: 16, borderWidth: 3, marginBottom: SPACING.lg, ...SHADOWS.medium },
+  sectionTitle: { fontSize: FONT_SIZES.md, fontWeight: '900', letterSpacing: 1.5, marginBottom: SPACING.md },
+  optionsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm },
+  optionCard: { width: '31%', padding: SPACING.md, borderRadius: 12, borderWidth: 2, alignItems: 'center', gap: SPACING.xs },
+  optionEmoji: { fontSize: 32 },
+  optionText: { fontSize: FONT_SIZES.xs, fontWeight: '700', letterSpacing: 0.5 },
+  levelContainer: { flexDirection: 'row', gap: SPACING.sm },
+  levelButton: { flex: 1, padding: SPACING.md, borderRadius: 12, borderWidth: 2, alignItems: 'center' },
+  levelText: { fontSize: FONT_SIZES.sm, fontWeight: '700', letterSpacing: 0.5 },
+  topicsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm, marginBottom: SPACING.lg },
+  topicCard: { width: '48%', padding: SPACING.md, borderRadius: 12, borderWidth: 2, alignItems: 'center', gap: SPACING.xs },
+  topicText: { fontSize: FONT_SIZES.xs, fontWeight: '700', textAlign: 'center', letterSpacing: 0.5 },
+  orText: { fontSize: FONT_SIZES.sm, fontWeight: '700', letterSpacing: 1, marginBottom: SPACING.sm, textAlign: 'center' },
+  customInput: { padding: SPACING.md, borderRadius: 12, borderWidth: 2, fontSize: FONT_SIZES.md, fontWeight: '600', minHeight: 80, textAlignVertical: 'top' },
+  errorBanner: { flexDirection: 'row', alignItems: 'center', padding: SPACING.md, borderRadius: 12, borderWidth: 3, gap: SPACING.sm, marginBottom: SPACING.lg },
+  errorText: { flex: 1, fontSize: FONT_SIZES.sm, fontWeight: '600', color: '#FFFFFF' },
+  footer: { padding: SPACING.lg, borderTopWidth: 3, ...SHADOWS.large },
+  generateButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: SPACING.lg, borderRadius: 16, borderWidth: 3, gap: SPACING.sm, ...SHADOWS.medium },
+  generateButtonText: { fontSize: FONT_SIZES.lg, fontWeight: '900', color: '#FFFFFF', letterSpacing: 1.5 },
 });
