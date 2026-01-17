@@ -55,16 +55,16 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="groups"
+        name="profile"
         options={{
-          title: 'Groups',
+          title: 'Profile',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="grid" size={size} color={color} />
+            <Ionicons name="person" size={size} color={color} />
           ),
         }}
       />
       <Tabs.Screen
-        name="profile"
+        name="groups"
         options={{
           href: null,
         }}
