@@ -263,17 +263,35 @@ export default function ProfileScreen() {
           </View>
         )}
 
+        {/* Send Feedback Button */}
+        <TouchableOpacity
+          style={styles.feedbackButton}
+          onPress={() => setFeedbackModalVisible(true)}
+        >
+          <Ionicons name="chatbox-ellipses" size={20} color={COLORS.accent} />
+          <Text style={styles.feedbackButtonText}>SEND FEEDBACK</Text>
+        </TouchableOpacity>
+
         {/* Logout */}
         <Button
           title="LOG OUT"
           onPress={handleLogout}
           variant="outline"
           fullWidth
-          style={{ marginTop: SPACING.lg }}
+          style={{ marginTop: SPACING.md }}
         />
 
         <Text style={styles.version}>FLUENTSTORY V1.0.0</Text>
       </ScrollView>
+
+      {/* Feedback Modal */}
+      <FeedbackModal
+        visible={feedbackModalVisible}
+        onClose={() => setFeedbackModalVisible(false)}
+        onSubmitSuccess={() => {
+          Alert.alert('Success', 'Thank you for your feedback!');
+        }}
+      />
     </SafeAreaView>
   );
 }
