@@ -189,6 +189,18 @@ backend:
         - agent: "main"
         - comment: "Implemented getDue and submit endpoints with proper mastery level progression"
 
+  - task: "Feedback Collection API"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+        - agent: "main"
+        - comment: "Created feedback endpoints - POST /api/feedback/submit and GET /api/feedback/{user_id}. Stores feedback with rating, message, category, and user context in MongoDB"
+
 frontend:
   - task: "Login Screen"
     implemented: true
