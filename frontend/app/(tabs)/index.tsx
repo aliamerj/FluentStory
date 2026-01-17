@@ -251,6 +251,13 @@ export default function HomeScreen() {
           </Card>
         )}
       </ScrollView>
+
+      {/* Tips Modal */}
+      <TipsModal
+        visible={showTips}
+        onClose={handleCloseTips}
+        language={user?.target_language || 'English'}
+      />
     </SafeAreaView>
   );
 }
