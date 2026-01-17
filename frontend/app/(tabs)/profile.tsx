@@ -186,6 +186,20 @@ export default function ProfileScreen() {
         {/* App Settings */}
         <Text style={styles.sectionTitle}>APP SETTINGS</Text>
         <Card style={styles.settingsCard}>
+          <View style={styles.settingRow}>
+            <View style={styles.settingLeft}>
+              <View style={styles.settingIcon}>
+                <Ionicons name={isDarkMode ? "moon" : "sunny"} size={20} color={COLORS.white} />
+              </View>
+              <Text style={styles.settingLabel}>DARK MODE</Text>
+            </View>
+            <Switch
+              value={isDarkMode}
+              onValueChange={toggleTheme}
+              trackColor={{ false: COLORS.borderLight, true: COLORS.accent }}
+              thumbColor={COLORS.white}
+            />
+          </View>
           <View style={[styles.settingRow, styles.settingRowLast]}>
             <View style={styles.settingLeft}>
               <View style={styles.settingIcon}>
