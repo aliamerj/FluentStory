@@ -204,6 +204,21 @@ export default function ProfileScreen() {
               thumbColor={COLORS.white}
             />
           </View>
+          <TouchableOpacity
+            style={styles.settingRow}
+            onPress={() => setLanguageModalVisible(true)}
+          >
+            <View style={styles.settingLeft}>
+              <View style={[styles.settingIcon, { backgroundColor: colors.accent, borderColor: colors.border }]}>
+                <Ionicons name="language" size={20} color={COLORS.white} />
+              </View>
+              <Text style={[styles.settingLabel, { color: colors.textPrimary }]}>APP LANGUAGE</Text>
+            </View>
+            <View style={styles.settingRight}>
+              <Text style={[styles.settingValue, { color: colors.textMuted }]}>{languageNames[language]}</Text>
+              <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+            </View>
+          </TouchableOpacity>
           <View style={[styles.settingRow, styles.settingRowLast]}>
             <View style={styles.settingLeft}>
               <View style={[styles.settingIcon, { backgroundColor: colors.accent, borderColor: colors.border }]}>
