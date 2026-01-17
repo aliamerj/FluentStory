@@ -227,7 +227,7 @@ export default function HomeScreen() {
         {/* Header */}
         <View style={styles.header}>
           <View>
-            <Text style={[styles.greeting, { color: colors.textSecondary }]}>WELCOME BACK,</Text>
+            <Text style={[styles.greeting, { color: colors.textSecondary }]}>{t.welcomeBack}</Text>
             <Text style={[styles.userName, { color: colors.textPrimary }]}>
               {user?.email?.split('@')[0]?.toUpperCase() || 'LEARNER'}
             </Text>
@@ -247,7 +247,7 @@ export default function HomeScreen() {
               <Ionicons name="book" size={24} color="#FFFFFF" />
             </View>
             <Text style={[styles.statValue, { color: colors.textPrimary }]}>{stats?.words_learned || 0}</Text>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]}>Words Learned</Text>
+            <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t.wordsLearned}</Text>
           </View>
 
           <View style={[styles.statCard, { backgroundColor: colors.white, borderColor: colors.border }]}>
@@ -255,7 +255,7 @@ export default function HomeScreen() {
               <Ionicons name="flame" size={24} color="#FFFFFF" />
             </View>
             <Text style={[styles.statValue, { color: colors.textPrimary }]}>{stats?.current_streak || 0}</Text>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]}>Day Streak</Text>
+            <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t.dayStreak}</Text>
           </View>
 
           <View style={[styles.statCard, { backgroundColor: colors.white, borderColor: colors.border }]}>
@@ -263,13 +263,13 @@ export default function HomeScreen() {
               <Ionicons name="checkmark-circle" size={24} color="#FFFFFF" />
             </View>
             <Text style={[styles.statValue, { color: colors.textPrimary }]}>{stats?.total_reviews || 0}</Text>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]}>Reviews Done</Text>
+            <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t.reviewsDone}</Text>
           </View>
         </View>
 
         {/* Quick Actions */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>QUICK ACTIONS</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t.quickActions}</Text>
           
           <TouchableOpacity
             style={[styles.actionCard, styles.primaryAction, { backgroundColor: colors.accent, borderColor: colors.border }]}
@@ -278,8 +278,8 @@ export default function HomeScreen() {
             <View style={styles.actionLeft}>
               <Ionicons name="sparkles" size={28} color="#FFFFFF" />
               <View style={styles.actionText}>
-                <Text style={styles.actionTitle}>Generate Story</Text>
-                <Text style={styles.actionSubtitle}>Create AI-powered stories</Text>
+                <Text style={styles.actionTitle}>{t.generateStory}</Text>
+                <Text style={styles.actionSubtitle}>{t.createAIPoweredStories}</Text>
               </View>
             </View>
             <Ionicons name="arrow-forward" size={24} color="#FFFFFF" />
@@ -295,8 +295,8 @@ export default function HomeScreen() {
                   <Ionicons name="refresh" size={24} color="#FFFFFF" />
                 </View>
                 <View style={styles.actionText}>
-                  <Text style={[styles.actionTitleSmall, { color: colors.textPrimary }]}>Review Words</Text>
-                  <Text style={[styles.actionSubtitleSmall, { color: colors.textMuted }]}>{dueReviews} words due</Text>
+                  <Text style={[styles.actionTitleSmall, { color: colors.textPrimary }]}>{t.reviewWords}</Text>
+                  <Text style={[styles.actionSubtitleSmall, { color: colors.textMuted }]}>{dueReviews} {t.wordsDue}</Text>
                 </View>
               </View>
               <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
@@ -308,9 +308,9 @@ export default function HomeScreen() {
         {dayGroups.length > 0 && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>WORD GROUPS</Text>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t.wordGroups}</Text>
               <TouchableOpacity onPress={() => router.push('/(tabs)/dictionary')}>
-                <Text style={[styles.seeAll, { color: colors.accent }]}>See All →</Text>
+                <Text style={[styles.seeAll, { color: colors.accent }]}>{t.seeAll}</Text>
               </TouchableOpacity>
             </View>
 
