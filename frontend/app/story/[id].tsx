@@ -11,9 +11,9 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { Audio } from 'expo-av';
+import * as Speech from 'expo-speech';
 import { useAuthStore } from '../../src/store/authStore';
-import { storyApi, wordApi, ttsApi } from '../../src/services/api';
+import { storyApi, wordApi } from '../../src/services/api';
 import { WordModal } from '../../src/components/WordModal';
 import { COLORS, SPACING, FONT_SIZES, SHADOWS } from '../../src/constants/theme';
 
@@ -31,6 +31,29 @@ interface SavedWord {
   word: string;
 }
 
+// Map language names to speech codes
+const getLanguageCode = (language: string): string => {
+  const langMap: { [key: string]: string } = {
+    'English': 'en-US',
+    'Spanish': 'es-ES',
+    'French': 'fr-FR',
+    'German': 'de-DE',
+    'Italian': 'it-IT',
+    'Portuguese': 'pt-BR',
+    'Russian': 'ru-RU',
+    'Chinese': 'zh-CN',
+    'Japanese': 'ja-JP',
+    'Korean': 'ko-KR',
+    'Arabic': 'ar-SA',
+    'Hindi': 'hi-IN',
+    'Dutch': 'nl-NL',
+    'Polish': 'pl-PL',
+    'Swedish': 'sv-SE',
+    'Turkish': 'tr-TR',
+  };
+  return langMap[language] || language.toLowerCase().substring(0, 2);
+};
+
 export default function StoryScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
@@ -40,8 +63,7 @@ export default function StoryScreen() {
   const [savedWords, setSavedWords] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
-  const [sound, setSound] = useState<Audio.Sound | null>(null);
+  const [playbackSpeed, setPlaybackSpeed] = useState(1.0);
 
   // Word modal state
   const [selectedWord, setSelectedWord] = useState<string | null>(null);
@@ -49,6 +71,8 @@ export default function StoryScreen() {
   const [translation, setTranslation] = useState<string | null>(null);
   const [isTranslating, setIsTranslating] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
+
+  const speedOptions = [0.5, 0.75, 1.0, 1.25, 1.5];
 
   const loadStory = async () => {
     if (!id || !user) return;
@@ -74,50 +98,33 @@ export default function StoryScreen() {
     loadStory();
     
     return () => {
-      if (sound) {
-        sound.unloadAsync();
-      }
+      Speech.stop();
     };
   }, [id, user]);
 
   const handlePlayPause = async () => {
     if (!story) return;
 
-    if (isPlaying && sound) {
-      await sound.pauseAsync();
+    if (isPlaying) {
+      await Speech.stop();
       setIsPlaying(false);
-      return;
-    }
-
-    if (sound) {
-      await sound.playAsync();
+    } else {
       setIsPlaying(true);
-      return;
-    }
-
-    // Generate AI speech
-    setIsGeneratingAudio(true);
-    try {
-      const response = await ttsApi.generate(story.content, 'nova', 0.9);
-      const audioBase64 = response.data.audio_base64;
-      
-      const { sound: newSound } = await Audio.Sound.createAsync(
-        { uri: `data:audio/mp3;base64,${audioBase64}` },
-        { shouldPlay: true }
-      );
-      setSound(newSound);
-      setIsPlaying(true);
-      
-      newSound.setOnPlaybackStatusUpdate((status) => {
-        if (status.isLoaded && status.didJustFinish) {
-          setIsPlaying(false);
-        }
+      const langCode = getLanguageCode(story.language);
+      await Speech.speak(story.content, {
+        language: langCode,
+        rate: playbackSpeed * 0.85, // Slightly slower for learning
+        pitch: 1.0,
+        onDone: () => setIsPlaying(false),
+        onError: () => setIsPlaying(false),
       });
-    } catch (error) {
-      console.error('TTS error:', error);
-    } finally {
-      setIsGeneratingAudio(false);
     }
+  };
+
+  const handleSpeedChange = () => {
+    const currentIndex = speedOptions.indexOf(playbackSpeed);
+    const nextIndex = (currentIndex + 1) % speedOptions.length;
+    setPlaybackSpeed(speedOptions[nextIndex]);
   };
 
   const handleWordPress = async (word: string, sentence: string) => {
@@ -266,27 +273,22 @@ export default function StoryScreen() {
         <TouchableOpacity 
           onPress={handlePlayPause} 
           style={styles.playButton}
-          disabled={isGeneratingAudio}
         >
-          {isGeneratingAudio ? (
-            <ActivityIndicator size="small" color={COLORS.white} />
-          ) : (
-            <Ionicons
-              name={isPlaying ? 'pause' : 'play'}
-              size={28}
-              color={COLORS.white}
-            />
-          )}
+          <Ionicons
+            name={isPlaying ? 'pause' : 'play'}
+            size={28}
+            color={COLORS.white}
+          />
         </TouchableOpacity>
         <View style={styles.audioInfo}>
           <Text style={styles.audioTitle}>
-            {isGeneratingAudio ? 'GENERATING AI VOICE...' : isPlaying ? 'NOW PLAYING' : 'AI VOICE'}
+            {isPlaying ? 'NOW PLAYING' : 'TEXT-TO-SPEECH'}
           </Text>
-          <Text style={styles.audioSubtitle}>NATURAL SPEECH</Text>
+          <Text style={styles.audioSubtitle}>TAP TO LISTEN</Text>
         </View>
-        <View style={styles.voiceBadge}>
-          <Text style={styles.voiceText}>NOVA</Text>
-        </View>
+        <TouchableOpacity onPress={handleSpeedChange} style={styles.speedButton}>
+          <Text style={styles.speedText}>{playbackSpeed}x</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Instruction */}
@@ -422,13 +424,13 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     letterSpacing: 1,
   },
-  voiceBadge: {
+  speedButton: {
     backgroundColor: COLORS.accent,
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: SPACING.xs,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
   },
-  voiceText: {
-    fontSize: FONT_SIZES.xs,
+  speedText: {
+    fontSize: FONT_SIZES.sm,
     fontWeight: '700',
     color: COLORS.white,
     letterSpacing: 1,

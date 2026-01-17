@@ -16,7 +16,7 @@ import { useAuthStore } from '../../src/store/authStore';
 import { statsApi, storyApi } from '../../src/services/api';
 import { Card } from '../../src/components/Card';
 import { Button } from '../../src/components/Button';
-import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS } from '../../src/constants/theme';
+import { COLORS, SPACING, FONT_SIZES, SHADOWS } from '../../src/constants/theme';
 
 interface Story {
   id: string;
@@ -33,7 +33,6 @@ export default function ProfileScreen() {
   const [stories, setStories] = useState<Story[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [darkMode, setDarkMode] = useState(true);
   const [notifications, setNotifications] = useState(true);
 
   const loadData = async () => {
@@ -61,7 +60,7 @@ export default function ProfileScreen() {
 
   const handleLogout = () => {
     Alert.alert(
-      'Log Out',
+      'LOG OUT',
       'Are you sure you want to log out?',
       [
         { text: 'Cancel', style: 'cancel' },
@@ -95,7 +94,7 @@ export default function ProfileScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor={COLORS.primary}
+            tintColor={COLORS.black}
           />
         }
       >
@@ -106,102 +105,94 @@ export default function ProfileScreen() {
               {user?.email?.charAt(0).toUpperCase() || 'U'}
             </Text>
           </View>
-          <Text style={styles.email}>{user?.email}</Text>
+          <Text style={styles.email}>{user?.email?.toUpperCase()}</Text>
           <View style={styles.badges}>
             {user?.is_premium && (
               <View style={styles.premiumBadge}>
-                <Ionicons name="diamond" size={14} color={COLORS.warning} />
-                <Text style={styles.premiumText}>Premium</Text>
+                <Ionicons name="diamond" size={14} color={COLORS.white} />
+                <Text style={styles.premiumText}>PREMIUM</Text>
               </View>
             )}
             <View style={styles.levelBadge}>
-              <Text style={styles.levelText}>{user?.proficiency_level}</Text>
+              <Text style={styles.levelText}>{user?.proficiency_level?.toUpperCase()}</Text>
             </View>
           </View>
         </View>
 
         {/* Stats Overview */}
-        <Card style={styles.statsCard}>
+        <View style={styles.statsCard}>
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
               <Text style={styles.statValue}>{user?.words_saved_count || 0}</Text>
-              <Text style={styles.statLabel}>Words</Text>
+              <Text style={styles.statLabel}>WORDS</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
               <Text style={styles.statValue}>{stories.length}</Text>
-              <Text style={styles.statLabel}>Stories</Text>
+              <Text style={styles.statLabel}>STORIES</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
               <Text style={styles.statValue}>{user?.current_streak || 0}</Text>
-              <Text style={styles.statLabel}>Streak</Text>
+              <Text style={styles.statLabel}>STREAK</Text>
             </View>
           </View>
-        </Card>
+        </View>
 
         {/* Learning Settings */}
-        <Text style={styles.sectionTitle}>Learning Settings</Text>
-        <Card style={styles.settingsCard}>
-          <TouchableOpacity style={styles.settingRow}>
-            <View style={styles.settingLeft}>
-              <Ionicons name="globe-outline" size={22} color={COLORS.primary} />
-              <View style={styles.settingText}>
-                <Text style={styles.settingLabel}>Native Language</Text>
-                <Text style={styles.settingValue}>{user?.native_language}</Text>
-              </View>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color={COLORS.textMuted} />
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.settingRow}>
-            <View style={styles.settingLeft}>
-              <Ionicons name="school-outline" size={22} color={COLORS.primary} />
-              <View style={styles.settingText}>
-                <Text style={styles.settingLabel}>Learning</Text>
-                <Text style={styles.settingValue}>{user?.target_language}</Text>
-              </View>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color={COLORS.textMuted} />
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={[styles.settingRow, styles.settingRowLast]}>
-            <View style={styles.settingLeft}>
-              <Ionicons name="trending-up-outline" size={22} color={COLORS.primary} />
-              <View style={styles.settingText}>
-                <Text style={styles.settingLabel}>Level</Text>
-                <Text style={styles.settingValue}>{user?.proficiency_level}</Text>
-              </View>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color={COLORS.textMuted} />
-          </TouchableOpacity>
-        </Card>
-
-        {/* App Settings */}
-        <Text style={styles.sectionTitle}>App Settings</Text>
+        <Text style={styles.sectionTitle}>LEARNING SETTINGS</Text>
         <Card style={styles.settingsCard}>
           <View style={styles.settingRow}>
             <View style={styles.settingLeft}>
-              <Ionicons name="notifications-outline" size={22} color={COLORS.primary} />
-              <Text style={styles.settingLabel}>Notifications</Text>
+              <View style={styles.settingIcon}>
+                <Ionicons name="globe-outline" size={20} color={COLORS.white} />
+              </View>
+              <View style={styles.settingText}>
+                <Text style={styles.settingLabel}>NATIVE LANGUAGE</Text>
+                <Text style={styles.settingValue}>{user?.native_language}</Text>
+              </View>
             </View>
-            <Switch
-              value={notifications}
-              onValueChange={setNotifications}
-              trackColor={{ false: COLORS.border, true: COLORS.primary }}
-              thumbColor={COLORS.white}
-            />
+          </View>
+          
+          <View style={styles.settingRow}>
+            <View style={styles.settingLeft}>
+              <View style={styles.settingIcon}>
+                <Ionicons name="school-outline" size={20} color={COLORS.white} />
+              </View>
+              <View style={styles.settingText}>
+                <Text style={styles.settingLabel}>LEARNING</Text>
+                <Text style={styles.settingValue}>{user?.target_language}</Text>
+              </View>
+            </View>
           </View>
           
           <View style={[styles.settingRow, styles.settingRowLast]}>
             <View style={styles.settingLeft}>
-              <Ionicons name="moon-outline" size={22} color={COLORS.primary} />
-              <Text style={styles.settingLabel}>Dark Mode</Text>
+              <View style={styles.settingIcon}>
+                <Ionicons name="trending-up-outline" size={20} color={COLORS.white} />
+              </View>
+              <View style={styles.settingText}>
+                <Text style={styles.settingLabel}>LEVEL</Text>
+                <Text style={styles.settingValue}>{user?.proficiency_level}</Text>
+              </View>
+            </View>
+          </View>
+        </Card>
+
+        {/* App Settings */}
+        <Text style={styles.sectionTitle}>APP SETTINGS</Text>
+        <Card style={styles.settingsCard}>
+          <View style={[styles.settingRow, styles.settingRowLast]}>
+            <View style={styles.settingLeft}>
+              <View style={styles.settingIcon}>
+                <Ionicons name="notifications-outline" size={20} color={COLORS.white} />
+              </View>
+              <Text style={styles.settingLabel}>NOTIFICATIONS</Text>
             </View>
             <Switch
-              value={darkMode}
-              onValueChange={setDarkMode}
-              trackColor={{ false: COLORS.border, true: COLORS.primary }}
+              value={notifications}
+              onValueChange={setNotifications}
+              trackColor={{ false: COLORS.borderLight, true: COLORS.accent }}
               thumbColor={COLORS.white}
             />
           </View>
@@ -210,8 +201,8 @@ export default function ProfileScreen() {
         {/* My Stories */}
         {stories.length > 0 && (
           <>
-            <Text style={styles.sectionTitle}>My Stories ({stories.length})</Text>
-            {stories.map((story) => (
+            <Text style={styles.sectionTitle}>MY STORIES ({stories.length})</Text>
+            {stories.slice(0, 5).map((story) => (
               <TouchableOpacity
                 key={story.id}
                 style={styles.storyItem}
@@ -222,7 +213,7 @@ export default function ProfileScreen() {
                     {story.title}
                   </Text>
                   <Text style={styles.storyMeta}>
-                    {story.language} • {story.topic}
+                    {story.language.toUpperCase()} / {story.topic.toUpperCase()}
                   </Text>
                 </View>
                 <TouchableOpacity
@@ -238,47 +229,48 @@ export default function ProfileScreen() {
 
         {/* Premium Banner */}
         {!user?.is_premium && (
-          <Card style={styles.premiumCard}>
+          <View style={styles.premiumCard}>
             <View style={styles.premiumHeader}>
-              <Ionicons name="diamond" size={32} color={COLORS.warning} />
-              <Text style={styles.premiumTitle}>Upgrade to Premium</Text>
+              <Ionicons name="diamond" size={32} color={COLORS.accent} />
+              <Text style={styles.premiumTitle}>UPGRADE TO PREMIUM</Text>
             </View>
             <Text style={styles.premiumDescription}>
-              Get unlimited stories, unlimited word saving, and remove all ads.
+              Get unlimited stories, unlimited vocabulary, and remove all ads.
             </Text>
             <View style={styles.premiumFeatures}>
               <View style={styles.premiumFeature}>
                 <Ionicons name="checkmark" size={16} color={COLORS.success} />
-                <Text style={styles.premiumFeatureText}>Unlimited stories</Text>
+                <Text style={styles.premiumFeatureText}>UNLIMITED STORIES</Text>
               </View>
               <View style={styles.premiumFeature}>
                 <Ionicons name="checkmark" size={16} color={COLORS.success} />
-                <Text style={styles.premiumFeatureText}>Unlimited vocabulary</Text>
+                <Text style={styles.premiumFeatureText}>UNLIMITED VOCABULARY</Text>
               </View>
               <View style={styles.premiumFeature}>
                 <Ionicons name="checkmark" size={16} color={COLORS.success} />
-                <Text style={styles.premiumFeatureText}>No ads</Text>
+                <Text style={styles.premiumFeatureText}>NO ADS</Text>
               </View>
             </View>
             <Button
-              title="$4.99/month"
-              onPress={() => Alert.alert('Premium', 'Premium purchases coming soon!')}
+              title="$4.99/MONTH"
+              onPress={() => Alert.alert('PREMIUM', 'Premium purchases coming soon!')}
               fullWidth
+              variant="accent"
               style={{ marginTop: SPACING.md }}
             />
-          </Card>
+          </View>
         )}
 
         {/* Logout */}
         <Button
-          title="Log Out"
+          title="LOG OUT"
           onPress={handleLogout}
           variant="outline"
           fullWidth
           style={{ marginTop: SPACING.lg }}
         />
 
-        <Text style={styles.version}>FluentStory v1.0.0</Text>
+        <Text style={styles.version}>FLUENTSTORY V1.0.0</Text>
       </ScrollView>
     </SafeAreaView>
   );
@@ -300,21 +292,21 @@ const styles = StyleSheet.create({
   avatar: {
     width: 80,
     height: 80,
-    borderRadius: 40,
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.black,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: SPACING.md,
   },
   avatarText: {
     fontSize: FONT_SIZES.xxxl,
-    fontWeight: '700',
+    fontWeight: '900',
     color: COLORS.white,
   },
   email: {
-    fontSize: FONT_SIZES.lg,
-    fontWeight: '600',
-    color: COLORS.text,
+    fontSize: FONT_SIZES.sm,
+    fontWeight: '700',
+    color: COLORS.black,
+    letterSpacing: 1,
   },
   badges: {
     flexDirection: 'row',
@@ -324,29 +316,33 @@ const styles = StyleSheet.create({
   premiumBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.warning + '20',
+    backgroundColor: COLORS.accent,
     paddingHorizontal: SPACING.sm,
     paddingVertical: SPACING.xs,
-    borderRadius: BORDER_RADIUS.full,
     gap: 4,
   },
   premiumText: {
     fontSize: FONT_SIZES.xs,
-    fontWeight: '600',
-    color: COLORS.warning,
+    fontWeight: '700',
+    color: COLORS.white,
+    letterSpacing: 1,
   },
   levelBadge: {
-    backgroundColor: COLORS.primary + '20',
+    backgroundColor: COLORS.black,
     paddingHorizontal: SPACING.sm,
     paddingVertical: SPACING.xs,
-    borderRadius: BORDER_RADIUS.full,
   },
   levelText: {
     fontSize: FONT_SIZES.xs,
-    fontWeight: '600',
-    color: COLORS.primary,
+    fontWeight: '700',
+    color: COLORS.white,
+    letterSpacing: 1,
   },
   statsCard: {
+    backgroundColor: COLORS.white,
+    borderWidth: 2,
+    borderColor: COLORS.black,
+    padding: SPACING.lg,
     marginBottom: SPACING.lg,
   },
   statsRow: {
@@ -359,25 +355,28 @@ const styles = StyleSheet.create({
   },
   statValue: {
     fontSize: FONT_SIZES.xxl,
-    fontWeight: '700',
-    color: COLORS.text,
+    fontWeight: '900',
+    color: COLORS.black,
   },
   statLabel: {
-    fontSize: FONT_SIZES.sm,
+    fontSize: FONT_SIZES.xs,
     color: COLORS.textSecondary,
     marginTop: 2,
+    fontWeight: '700',
+    letterSpacing: 1,
   },
   statDivider: {
-    width: 1,
+    width: 2,
     height: 40,
-    backgroundColor: COLORS.border,
+    backgroundColor: COLORS.black,
   },
   sectionTitle: {
-    fontSize: FONT_SIZES.md,
-    fontWeight: '600',
-    color: COLORS.text,
+    fontSize: FONT_SIZES.sm,
+    fontWeight: '900',
+    color: COLORS.black,
     marginBottom: SPACING.md,
     marginTop: SPACING.sm,
+    letterSpacing: 2,
   },
   settingsCard: {
     padding: 0,
@@ -388,8 +387,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: SPACING.md,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    borderBottomWidth: 2,
+    borderBottomColor: COLORS.borderLight,
   },
   settingRowLast: {
     borderBottomWidth: 0,
@@ -399,48 +398,61 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: SPACING.md,
   },
+  settingIcon: {
+    width: 36,
+    height: 36,
+    backgroundColor: COLORS.black,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   settingText: {
     gap: 2,
   },
   settingLabel: {
-    fontSize: FONT_SIZES.md,
-    color: COLORS.text,
+    fontSize: FONT_SIZES.xs,
+    color: COLORS.textSecondary,
+    fontWeight: '700',
+    letterSpacing: 1,
   },
   settingValue: {
-    fontSize: FONT_SIZES.sm,
-    color: COLORS.textSecondary,
+    fontSize: FONT_SIZES.md,
+    color: COLORS.black,
+    fontWeight: '600',
   },
   storyItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.surface,
-    borderRadius: BORDER_RADIUS.md,
+    backgroundColor: COLORS.white,
+    borderWidth: 2,
+    borderColor: COLORS.black,
     padding: SPACING.md,
     marginBottom: SPACING.sm,
-    borderWidth: 1,
-    borderColor: COLORS.border,
   },
   storyInfo: {
     flex: 1,
   },
   storyTitle: {
     fontSize: FONT_SIZES.md,
-    fontWeight: '600',
-    color: COLORS.text,
+    fontWeight: '700',
+    color: COLORS.black,
   },
   storyMeta: {
-    fontSize: FONT_SIZES.sm,
+    fontSize: FONT_SIZES.xs,
     color: COLORS.textSecondary,
     marginTop: 2,
+    fontWeight: '600',
+    letterSpacing: 1,
   },
   deleteButton: {
     padding: SPACING.sm,
   },
   premiumCard: {
+    backgroundColor: COLORS.white,
+    borderWidth: 3,
+    borderColor: COLORS.accent,
+    padding: SPACING.lg,
     marginTop: SPACING.lg,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.warning + '40',
   },
   premiumHeader: {
     alignItems: 'center',
@@ -448,8 +460,9 @@ const styles = StyleSheet.create({
   },
   premiumTitle: {
     fontSize: FONT_SIZES.lg,
-    fontWeight: '700',
-    color: COLORS.text,
+    fontWeight: '900',
+    color: COLORS.black,
+    letterSpacing: 2,
   },
   premiumDescription: {
     fontSize: FONT_SIZES.sm,
@@ -468,12 +481,16 @@ const styles = StyleSheet.create({
   },
   premiumFeatureText: {
     fontSize: FONT_SIZES.sm,
-    color: COLORS.text,
+    color: COLORS.black,
+    fontWeight: '600',
+    letterSpacing: 1,
   },
   version: {
     fontSize: FONT_SIZES.xs,
     color: COLORS.textMuted,
     textAlign: 'center',
     marginTop: SPACING.xl,
+    fontWeight: '600',
+    letterSpacing: 2,
   },
 });

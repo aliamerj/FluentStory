@@ -11,9 +11,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { Audio } from 'expo-av';
+import * as Speech from 'expo-speech';
 import { useAuthStore } from '../../src/store/authStore';
-import { wordApi, ttsApi } from '../../src/services/api';
+import { wordApi } from '../../src/services/api';
 import { COLORS, SPACING, FONT_SIZES, SHADOWS } from '../../src/constants/theme';
 import { format, parseISO } from 'date-fns';
 
@@ -32,6 +32,22 @@ interface Section {
   data: Word[];
 }
 
+// Map language names to speech codes
+const getLanguageCode = (language: string): string => {
+  const langMap: { [key: string]: string } = {
+    'English': 'en-US',
+    'Spanish': 'es-ES',
+    'French': 'fr-FR',
+    'German': 'de-DE',
+    'Italian': 'it-IT',
+    'Portuguese': 'pt-BR',
+    'Chinese': 'zh-CN',
+    'Japanese': 'ja-JP',
+    'Korean': 'ko-KR',
+  };
+  return langMap[language] || 'es-ES';
+};
+
 export default function DictionaryScreen() {
   const { user } = useAuthStore();
   
@@ -42,7 +58,7 @@ export default function DictionaryScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'learning' | 'mastered'>('all');
-  const [playingWordId, setPlayingWordId] = useState<string | null>(null);
+  const [speakingWordId, setSpeakingWordId] = useState<string | null>(null);
 
   const loadWords = async () => {
     if (!user) return;
@@ -102,27 +118,21 @@ export default function DictionaryScreen() {
   }, [filteredWords]);
 
   const handleSpeak = async (word: Word) => {
-    if (playingWordId === word.id) return;
+    if (speakingWordId === word.id) return;
     
-    setPlayingWordId(word.id);
+    setSpeakingWordId(word.id);
     try {
-      const response = await ttsApi.generate(word.word, 'nova', 0.85);
-      const audioBase64 = response.data.audio_base64;
-      
-      const { sound } = await Audio.Sound.createAsync(
-        { uri: `data:audio/mp3;base64,${audioBase64}` },
-        { shouldPlay: true }
-      );
-      
-      sound.setOnPlaybackStatusUpdate((status) => {
-        if (status.isLoaded && status.didJustFinish) {
-          setPlayingWordId(null);
-          sound.unloadAsync();
-        }
+      const langCode = getLanguageCode(user?.target_language || 'Spanish');
+      await Speech.speak(word.word, {
+        language: langCode,
+        rate: 0.75,
+        pitch: 1.0,
+        onDone: () => setSpeakingWordId(null),
+        onError: () => setSpeakingWordId(null),
       });
     } catch (error) {
-      console.error('TTS error:', error);
-      setPlayingWordId(null);
+      console.error('Speech error:', error);
+      setSpeakingWordId(null);
     }
   };
 
@@ -149,9 +159,9 @@ export default function DictionaryScreen() {
           <TouchableOpacity 
             onPress={() => handleSpeak(item)} 
             style={styles.speakButton}
-            disabled={playingWordId === item.id}
+            disabled={speakingWordId === item.id}
           >
-            {playingWordId === item.id ? (
+            {speakingWordId === item.id ? (
               <ActivityIndicator size="small" color={COLORS.white} />
             ) : (
               <Ionicons name="volume-high" size={18} color={COLORS.white} />

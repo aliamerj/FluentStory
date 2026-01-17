@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -13,16 +12,14 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../../src/store/authStore';
 import { Button } from '../../src/components/Button';
 import { Dropdown } from '../../src/components/Dropdown';
-import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS } from '../../src/constants/theme';
+import { COLORS, SPACING, FONT_SIZES, SHADOWS } from '../../src/constants/theme';
 import { LANGUAGES, PROFICIENCY_LEVELS } from '../../src/constants/languages';
 
-const { width } = Dimensions.get('window');
-
 const STEPS = [
-  { id: 'native', title: 'Native Language', description: 'What language do you speak?' },
-  { id: 'target', title: 'Learn Language', description: 'What language do you want to learn?' },
-  { id: 'level', title: 'Your Level', description: 'What is your current proficiency?' },
-  { id: 'tutorial', title: 'How It Works', description: 'Learn how to use FluentStory' },
+  { id: 'native', title: 'Native Language' },
+  { id: 'target', title: 'Learn Language' },
+  { id: 'level', title: 'Your Level' },
+  { id: 'tutorial', title: 'How It Works' },
 ];
 
 export default function OnboardingScreen() {
@@ -40,16 +37,10 @@ export default function OnboardingScreen() {
     label: `${lang.name} (${lang.nativeName})`,
   }));
 
-  const levelOptions = PROFICIENCY_LEVELS.map(level => ({
-    id: level.id,
-    label: level.label,
-  }));
-
   const handleNext = async () => {
     if (currentStep < STEPS.length - 1) {
       setCurrentStep(currentStep + 1);
     } else {
-      // Complete onboarding
       setIsLoading(true);
       try {
         await updateUser({
@@ -78,10 +69,12 @@ export default function OnboardingScreen() {
       case 0:
         return (
           <View style={styles.stepContent}>
-            <Ionicons name="globe-outline" size={60} color={COLORS.primary} />
-            <Text style={styles.stepTitle}>What's your native language?</Text>
+            <View style={styles.stepIcon}>
+              <Ionicons name="globe-outline" size={40} color={COLORS.white} />
+            </View>
+            <Text style={styles.stepTitle}>NATIVE LANGUAGE</Text>
             <Text style={styles.stepDescription}>
-              We'll use this to show you translations
+              What language do you speak?
             </Text>
             <View style={styles.dropdownContainer}>
               <Dropdown
@@ -96,10 +89,12 @@ export default function OnboardingScreen() {
       case 1:
         return (
           <View style={styles.stepContent}>
-            <Ionicons name="school-outline" size={60} color={COLORS.primary} />
-            <Text style={styles.stepTitle}>What language do you want to learn?</Text>
+            <View style={styles.stepIcon}>
+              <Ionicons name="school-outline" size={40} color={COLORS.white} />
+            </View>
+            <Text style={styles.stepTitle}>LEARN LANGUAGE</Text>
             <Text style={styles.stepDescription}>
-              We'll generate stories in this language
+              What language do you want to learn?
             </Text>
             <View style={styles.dropdownContainer}>
               <Dropdown
@@ -114,10 +109,12 @@ export default function OnboardingScreen() {
       case 2:
         return (
           <View style={styles.stepContent}>
-            <Ionicons name="trending-up-outline" size={60} color={COLORS.primary} />
-            <Text style={styles.stepTitle}>What's your current level?</Text>
+            <View style={styles.stepIcon}>
+              <Ionicons name="trending-up-outline" size={40} color={COLORS.white} />
+            </View>
+            <Text style={styles.stepTitle}>YOUR LEVEL</Text>
             <Text style={styles.stepDescription}>
-              We'll customize content difficulty for you
+              What's your current proficiency?
             </Text>
             <View style={styles.levelContainer}>
               {PROFICIENCY_LEVELS.map(level => (
@@ -133,17 +130,9 @@ export default function OnboardingScreen() {
                     styles.levelLabel,
                     proficiencyLevel === level.id && styles.levelLabelSelected,
                   ]}>
-                    {level.label}
+                    {level.label.toUpperCase()}
                   </Text>
                   <Text style={styles.levelDescription}>{level.description}</Text>
-                  {proficiencyLevel === level.id && (
-                    <Ionicons
-                      name="checkmark-circle"
-                      size={24}
-                      color={COLORS.primary}
-                      style={styles.levelCheck}
-                    />
-                  )}
                 </TouchableOpacity>
               ))}
             </View>
@@ -152,47 +141,47 @@ export default function OnboardingScreen() {
       case 3:
         return (
           <View style={styles.stepContent}>
-            <Text style={styles.stepTitle}>How FluentStory Works</Text>
+            <Text style={styles.stepTitle}>HOW IT WORKS</Text>
             <View style={styles.tutorialContainer}>
               <View style={styles.tutorialStep}>
-                <View style={styles.tutorialIcon}>
-                  <Ionicons name="create-outline" size={28} color={COLORS.primary} />
+                <View style={styles.tutorialNumber}>
+                  <Text style={styles.tutorialNumberText}>1</Text>
                 </View>
                 <View style={styles.tutorialText}>
-                  <Text style={styles.tutorialTitle}>1. Generate Stories</Text>
+                  <Text style={styles.tutorialTitle}>GENERATE STORIES</Text>
                   <Text style={styles.tutorialDescription}>
-                    AI creates personalized stories in your target language
+                    AI creates personalized content in your target language
                   </Text>
                 </View>
               </View>
               <View style={styles.tutorialStep}>
-                <View style={styles.tutorialIcon}>
-                  <Ionicons name="book-outline" size={28} color={COLORS.primary} />
+                <View style={styles.tutorialNumber}>
+                  <Text style={styles.tutorialNumberText}>2</Text>
                 </View>
                 <View style={styles.tutorialText}>
-                  <Text style={styles.tutorialTitle}>2. Read & Listen</Text>
+                  <Text style={styles.tutorialTitle}>READ & LISTEN</Text>
                   <Text style={styles.tutorialDescription}>
                     Tap any word to see translations and hear pronunciation
                   </Text>
                 </View>
               </View>
               <View style={styles.tutorialStep}>
-                <View style={styles.tutorialIcon}>
-                  <Ionicons name="bookmark-outline" size={28} color={COLORS.primary} />
+                <View style={styles.tutorialNumber}>
+                  <Text style={styles.tutorialNumberText}>3</Text>
                 </View>
                 <View style={styles.tutorialText}>
-                  <Text style={styles.tutorialTitle}>3. Save Words</Text>
+                  <Text style={styles.tutorialTitle}>SAVE WORDS</Text>
                   <Text style={styles.tutorialDescription}>
                     Build your personal dictionary with new vocabulary
                   </Text>
                 </View>
               </View>
               <View style={styles.tutorialStep}>
-                <View style={styles.tutorialIcon}>
-                  <Ionicons name="refresh-outline" size={28} color={COLORS.primary} />
+                <View style={styles.tutorialNumber}>
+                  <Text style={styles.tutorialNumberText}>4</Text>
                 </View>
                 <View style={styles.tutorialText}>
-                  <Text style={styles.tutorialTitle}>4. Review & Master</Text>
+                  <Text style={styles.tutorialTitle}>REVIEW & MASTER</Text>
                   <Text style={styles.tutorialDescription}>
                     Spaced repetition helps you remember words forever
                   </Text>
@@ -211,7 +200,7 @@ export default function OnboardingScreen() {
       <View style={styles.header}>
         {currentStep > 0 ? (
           <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color={COLORS.text} />
+            <Ionicons name="arrow-back" size={24} color={COLORS.black} />
           </TouchableOpacity>
         ) : (
           <View style={styles.backButton} />
@@ -236,10 +225,11 @@ export default function OnboardingScreen() {
 
       <View style={styles.footer}>
         <Button
-          title={currentStep === STEPS.length - 1 ? "Let's Start!" : 'Continue'}
+          title={currentStep === STEPS.length - 1 ? "LET'S START!" : 'CONTINUE'}
           onPress={handleNext}
           fullWidth
           size="lg"
+          variant="accent"
           loading={isLoading}
         />
       </View>
@@ -270,14 +260,13 @@ const styles = StyleSheet.create({
     gap: SPACING.sm,
   },
   progressDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: COLORS.border,
+    width: 12,
+    height: 12,
+    backgroundColor: COLORS.borderLight,
   },
   progressDotActive: {
-    backgroundColor: COLORS.primary,
-    width: 24,
+    backgroundColor: COLORS.black,
+    width: 32,
   },
   content: {
     flex: 1,
@@ -288,12 +277,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingTop: SPACING.xl,
   },
+  stepIcon: {
+    width: 80,
+    height: 80,
+    backgroundColor: COLORS.black,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: SPACING.lg,
+  },
   stepTitle: {
     fontSize: FONT_SIZES.xxl,
-    fontWeight: '700',
-    color: COLORS.text,
+    fontWeight: '900',
+    color: COLORS.black,
     textAlign: 'center',
-    marginTop: SPACING.lg,
+    letterSpacing: 2,
   },
   stepDescription: {
     fontSize: FONT_SIZES.md,
@@ -310,34 +307,27 @@ const styles = StyleSheet.create({
     gap: SPACING.md,
   },
   levelOption: {
-    backgroundColor: COLORS.surface,
-    borderRadius: BORDER_RADIUS.lg,
-    padding: SPACING.lg,
+    backgroundColor: COLORS.white,
     borderWidth: 2,
-    borderColor: COLORS.border,
+    borderColor: COLORS.black,
+    padding: SPACING.lg,
   },
   levelOptionSelected: {
-    borderColor: COLORS.primary,
-    backgroundColor: COLORS.primary + '10',
+    backgroundColor: COLORS.black,
   },
   levelLabel: {
     fontSize: FONT_SIZES.lg,
-    fontWeight: '600',
-    color: COLORS.text,
+    fontWeight: '900',
+    color: COLORS.black,
+    letterSpacing: 1,
   },
   levelLabelSelected: {
-    color: COLORS.primary,
+    color: COLORS.white,
   },
   levelDescription: {
     fontSize: FONT_SIZES.sm,
     color: COLORS.textSecondary,
     marginTop: SPACING.xs,
-  },
-  levelCheck: {
-    position: 'absolute',
-    right: SPACING.md,
-    top: '50%',
-    marginTop: -12,
   },
   tutorialContainer: {
     width: '100%',
@@ -346,32 +336,39 @@ const styles = StyleSheet.create({
   },
   tutorialStep: {
     flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.surface,
-    borderRadius: BORDER_RADIUS.lg,
+    alignItems: 'flex-start',
+    backgroundColor: COLORS.white,
+    borderWidth: 2,
+    borderColor: COLORS.black,
     padding: SPACING.md,
+    gap: SPACING.md,
   },
-  tutorialIcon: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: COLORS.primary + '20',
+  tutorialNumber: {
+    width: 40,
+    height: 40,
+    backgroundColor: COLORS.accent,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: SPACING.md,
+  },
+  tutorialNumberText: {
+    fontSize: FONT_SIZES.lg,
+    fontWeight: '900',
+    color: COLORS.white,
   },
   tutorialText: {
     flex: 1,
   },
   tutorialTitle: {
-    fontSize: FONT_SIZES.md,
-    fontWeight: '600',
-    color: COLORS.text,
+    fontSize: FONT_SIZES.sm,
+    fontWeight: '900',
+    color: COLORS.black,
+    letterSpacing: 1,
   },
   tutorialDescription: {
     fontSize: FONT_SIZES.sm,
     color: COLORS.textSecondary,
     marginTop: SPACING.xs,
+    lineHeight: 20,
   },
   footer: {
     padding: SPACING.lg,
