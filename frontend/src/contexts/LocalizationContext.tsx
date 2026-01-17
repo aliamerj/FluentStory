@@ -56,6 +56,13 @@ interface Translations {
   sendFeedback: string;
   logout: string;
   
+  // Study mode
+  study: string;
+  iKnowIt: string;
+  iDontKnowIt: string;
+  studyComplete: string;
+  wordsToReview: string;
+  
   // Other
   generateStoryButton: string;
   back: string;
