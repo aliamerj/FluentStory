@@ -8,6 +8,7 @@ import {
   RefreshControl,
   Switch,
   Alert,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -18,6 +19,7 @@ import { Card } from '../../src/components/Card';
 import { Button } from '../../src/components/Button';
 import { FeedbackModal } from '../../src/components/FeedbackModal';
 import { useTheme } from '../../src/contexts/ThemeContext';
+import { useLocalization, languageNames } from '../../src/contexts/LocalizationContext';
 import { COLORS, SPACING, FONT_SIZES, SHADOWS } from '../../src/constants/theme';
 
 interface Story {
