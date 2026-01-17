@@ -13,11 +13,14 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuthStore } from '../../src/store/authStore';
-import { statsApi, storyApi, reviewApi } from '../../src/services/api';
+import { statsApi, storyApi, reviewApi, wordApi } from '../../src/services/api';
 import { Card } from '../../src/components/Card';
 import { Button } from '../../src/components/Button';
 import { TipsModal } from '../../src/components/TipsModal';
+import { FeedbackModal } from '../../src/components/FeedbackModal';
+import { useTheme } from '../../src/contexts/ThemeContext';
 import { COLORS, SPACING, FONT_SIZES, SHADOWS } from '../../src/constants/theme';
+import { format, parseISO } from 'date-fns';
 
 interface Stats {
   total_words: number;
