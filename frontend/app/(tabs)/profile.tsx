@@ -281,11 +281,11 @@ export default function ProfileScreen() {
 
         {/* Send Feedback Button */}
         <TouchableOpacity
-          style={styles.feedbackButton}
+          style={[styles.feedbackButton, { backgroundColor: colors.white, borderColor: colors.accent }]}
           onPress={() => setFeedbackModalVisible(true)}
         >
-          <Ionicons name="chatbox-ellipses" size={20} color={COLORS.accent} />
-          <Text style={styles.feedbackButtonText}>SEND FEEDBACK</Text>
+          <Ionicons name="chatbox-ellipses" size={20} color={colors.accent} />
+          <Text style={[styles.feedbackButtonText, { color: colors.accent }]}>SEND FEEDBACK</Text>
         </TouchableOpacity>
 
         {/* Logout */}
@@ -297,7 +297,7 @@ export default function ProfileScreen() {
           style={{ marginTop: SPACING.md }}
         />
 
-        <Text style={styles.version}>FLUENTSTORY V1.0.0</Text>
+        <Text style={[styles.version, { color: colors.textMuted }]}>FLUENTSTORY V1.0.0</Text>
       </ScrollView>
 
       {/* Feedback Modal */}
