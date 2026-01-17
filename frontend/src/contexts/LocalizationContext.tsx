@@ -579,6 +579,7 @@ export const languageNames: Record<Language, string> = {
   zh: '中文',
   ja: '日本語',
   ko: '한국어',
+  ru: 'Русский',
 };
 
 interface LocalizationContextType {
