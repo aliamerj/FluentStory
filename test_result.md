@@ -308,23 +308,71 @@ frontend:
     status_history:
         - working: "NA"
         - agent: "main"
-        - comment: "User settings, stats overview, story list, premium banner"
+        - comment: "User settings, stats overview, story list, premium banner, added Send Feedback button"
+
+  - task: "Groups Tab"
+    implemented: true
+    working: "NA"
+    file: "app/(tabs)/groups.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+        - agent: "main"
+        - comment: "NEW FEATURE - Groups words by day of week (Monday-Sunday) with specific colors and icons for each day. Shows day name + date as group header. Profile moved from tabs to Home screen header button"
+
+  - task: "Group Detail Screen"
+    implemented: true
+    working: "NA"
+    file: "app/group-detail.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+        - agent: "main"
+        - comment: "NEW FEATURE - Displays all words for a selected day group with full word details, TTS, delete, and mastery progress"
+
+  - task: "Tips Modal"
+    implemented: true
+    working: "NA"
+    file: "src/components/TipsModal.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+        - agent: "main"
+        - comment: "NEW FEATURE - Multilingual tips modal shown on first app launch. Supports 8 languages (English, Spanish, French, German, Italian, Portuguese, Chinese, Japanese, Korean). Stored in AsyncStorage to show only once"
+
+  - task: "Feedback Modal"
+    implemented: true
+    working: "NA"
+    file: "src/components/FeedbackModal.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+        - agent: "main"
+        - comment: "NEW FEATURE - User feedback collection widget with rating (1-5 stars), category selection, and text input. Accessible from Profile screen 'Send Feedback' button. Follows best UX practices - non-intrusive, skippable, respects dismissal"
 
 metadata:
   created_by: "main_agent"
-  version: "1.0"
-  test_sequence: 1
+  version: "1.1"
+  test_sequence: 2
   run_ui: true
 
 test_plan:
   current_focus:
-    - "Complete user flow: register -> onboarding -> home"
-    - "Story generation and reading with tappable words"
-    - "Spaced repetition review system"
+    - "Groups tab functionality - day-based word grouping"
+    - "Tips modal on first launch"
+    - "Feedback collection widget"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
 agent_communication:
     - agent: "main"
-    - message: "Initial implementation complete. All backend APIs tested with curl and working. Frontend screens implemented with full UI. Need to test complete user flow in mobile environment."
+    - message: "Phase 2 implementation complete. Added 3 major features: 1) Groups tab with day-based word organization 2) Multilingual tips modal for first launch 3) Feedback collection widget with best UX practices. Profile relocated from tabs to Home screen header. All backend APIs created and working. Frontend screens implemented with proper styling."
