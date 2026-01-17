@@ -49,6 +49,31 @@ export default function HomeScreen() {
   const [dueReviews, setDueReviews] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [showTips, setShowTips] = useState(false);
+
+  useEffect(() => {
+    checkFirstLaunch();
+  }, []);
+
+  const checkFirstLaunch = async () => {
+    try {
+      const hasSeenTips = await AsyncStorage.getItem('hasSeenTips');
+      if (!hasSeenTips) {
+        setShowTips(true);
+      }
+    } catch (error) {
+      console.error('Error checking first launch:', error);
+    }
+  };
+
+  const handleCloseTips = async () => {
+    setShowTips(false);
+    try {
+      await AsyncStorage.setItem('hasSeenTips', 'true');
+    } catch (error) {
+      console.error('Error saving tips flag:', error);
+    }
+  };
 
   const loadData = async () => {
     if (!user) return;
