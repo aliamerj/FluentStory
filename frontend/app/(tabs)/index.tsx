@@ -14,48 +14,60 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuthStore } from '../../src/store/authStore';
 import { statsApi, storyApi, reviewApi, wordApi } from '../../src/services/api';
-import { Card } from '../../src/components/Card';
-import { Button } from '../../src/components/Button';
 import { TipsModal } from '../../src/components/TipsModal';
 import { FeedbackModal } from '../../src/components/FeedbackModal';
 import { useTheme } from '../../src/contexts/ThemeContext';
-import { COLORS, SPACING, FONT_SIZES, SHADOWS } from '../../src/constants/theme';
+import { SPACING, FONT_SIZES, SHADOWS } from '../../src/constants/theme';
 import { format, parseISO } from 'date-fns';
 
 interface Stats {
-  total_words: number;
-  mastered_words: number;
-  learning_words: number;
-  due_reviews: number;
-  total_stories: number;
+  words_learned: number;
   current_streak: number;
-  reviews_this_week: number;
-  accuracy_rate: number;
-  stories_this_month: number;
-  is_premium: boolean;
+  total_reviews: number;
 }
 
 interface Story {
   id: string;
   title: string;
-  language: string;
-  topic: string;
+  content: string;
   created_at: string;
 }
+
+interface DayGroup {
+  dayName: string;
+  date: string;
+  wordCount: number;
+  color: string;
+  icon: string;
+}
+
+const dayConfig = {
+  Sunday: { icon: 'sunny', color: '#FFA500' },
+  Monday: { icon: 'calendar', color: '#FF6B6B' },
+  Tuesday: { icon: 'star', color: '#4ECDC4' },
+  Wednesday: { icon: 'flash', color: '#95E1D3' },
+  Thursday: { icon: 'heart', color: '#F38181' },
+  Friday: { icon: 'trophy', color: '#AA96DA' },
+  Saturday: { icon: 'gift', color: '#FCBAD3' },
+};
 
 export default function HomeScreen() {
   const router = useRouter();
   const { user, refreshUser } = useAuthStore();
+  const { colors } = useTheme();
   
   const [stats, setStats] = useState<Stats | null>(null);
   const [recentStories, setRecentStories] = useState<Story[]>([]);
   const [dueReviews, setDueReviews] = useState(0);
+  const [dayGroups, setDayGroups] = useState<DayGroup[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [showTips, setShowTips] = useState(false);
+  const [showFeedback, setShowFeedback] = useState(false);
 
   useEffect(() => {
     checkFirstLaunch();
+    checkFeedbackTiming();
   }, []);
 
   const checkFirstLaunch = async () => {
@@ -69,6 +81,41 @@ export default function HomeScreen() {
     }
   };
 
+  const checkFeedbackTiming = async () => {
+    try {
+      const feedbackDismissed = await AsyncStorage.getItem('feedbackDismissed');
+      const lastFeedbackShown = await AsyncStorage.getItem('lastFeedbackShown');
+      const appUsageTime = await AsyncStorage.getItem('appUsageTime');
+      
+      if (feedbackDismissed === 'true') return;
+      
+      const currentTime = Date.now();
+      const usageTime = parseInt(appUsageTime || '0');
+      
+      // Show feedback after 5 minutes of app usage
+      if (usageTime > 300000 && !lastFeedbackShown) {
+        setTimeout(() => setShowFeedback(true), 3000);
+      }
+    } catch (error) {
+      console.error('Error checking feedback timing:', error);
+    }
+  };
+
+  useEffect(() => {
+    // Track app usage time
+    const interval = setInterval(async () => {
+      try {
+        const currentUsage = await AsyncStorage.getItem('appUsageTime');
+        const newUsage = (parseInt(currentUsage || '0') + 10000).toString();
+        await AsyncStorage.setItem('appUsageTime', newUsage);
+      } catch (error) {
+        console.error('Error tracking usage:', error);
+      }
+    }, 10000); // Update every 10 seconds
+
+    return () => clearInterval(interval);
+  }, []);
+
   const handleCloseTips = async () => {
     setShowTips(false);
     try {
@@ -78,47 +125,92 @@ export default function HomeScreen() {
     }
   };
 
+  const handleCloseFeedback = async () => {
+    setShowFeedback(false);
+    try {
+      await AsyncStorage.setItem('feedbackDismissed', 'true');
+    } catch (error) {
+      console.error('Error saving feedback flag:', error);
+    }
+  };
+
   const loadData = async () => {
     if (!user) return;
     
     try {
-      const [statsRes, storiesRes, reviewsRes] = await Promise.all([
+      const [statsRes, storiesRes, reviewsRes, wordsRes] = await Promise.all([
         statsApi.get(user.id),
-        storyApi.getAll(user.id, 5),
+        storyApi.getAll(user.id, 3),
         reviewApi.getDue(user.id),
+        wordApi.getAll(user.id, 'all'),
       ]);
       
       setStats(statsRes.data);
       setRecentStories(storiesRes.data);
-      setDueReviews(reviewsRes.data.count);
+      setDueReviews(reviewsRes.data.length);
+      
+      // Group words by day
+      const words = wordsRes.data;
+      const grouped: { [key: string]: any[] } = {};
+      
+      words.forEach((word: any) => {
+        const wordDate = parseISO(word.date_saved);
+        const dayName = format(wordDate, 'EEEE');
+        
+        if (!grouped[dayName]) {
+          grouped[dayName] = [];
+        }
+        grouped[dayName].push(word);
+      });
+
+      const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+      const groups: DayGroup[] = days
+        .filter(day => grouped[day] && grouped[day].length > 0)
+        .slice(0, 3) // Show only top 3 groups
+        .map(day => {
+          const dayWords = grouped[day];
+          const mostRecentDate = dayWords
+            .map((w: any) => parseISO(w.date_saved))
+            .sort((a, b) => b.getTime() - a.getTime())[0];
+          
+          return {
+            dayName: day,
+            date: format(mostRecentDate, 'MMM d'),
+            wordCount: dayWords.length,
+            color: dayConfig[day as keyof typeof dayConfig].color,
+            icon: dayConfig[day as keyof typeof dayConfig].icon,
+          };
+        });
+
+      setDayGroups(groups);
     } catch (error) {
-      console.error('Failed to load home data:', error);
+      console.error('Failed to load data:', error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await Promise.all([loadData(), refreshUser()]);
-    setRefreshing(false);
-  }, [user]);
-
   useEffect(() => {
     loadData();
   }, [user]);
 
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadData();
+    await refreshUser();
+    setRefreshing(false);
+  }, [user]);
+
   if (isLoading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={COLORS.black} />
-        <Text style={styles.loadingText}>LOADING...</Text>
+      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.accent} />
       </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -126,132 +218,152 @@ export default function HomeScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor={COLORS.black}
+            tintColor={colors.accent}
           />
         }
       >
         {/* Header */}
         <View style={styles.header}>
           <View>
-            <Text style={styles.greeting}>HELLO,</Text>
-            <Text style={styles.userName}>{user?.email?.split('@')[0]?.toUpperCase() || 'LEARNER'}</Text>
+            <Text style={[styles.greeting, { color: colors.textSecondary }]}>WELCOME BACK,</Text>
+            <Text style={[styles.userName, { color: colors.textPrimary }]}>
+              {user?.email?.split('@')[0]?.toUpperCase() || 'LEARNER'}
+            </Text>
           </View>
-          <View style={styles.headerRight}>
-            {stats?.current_streak && stats.current_streak > 0 ? (
-              <View style={styles.streakBadge}>
-                <Ionicons name="flame" size={24} color={COLORS.accent} />
-                <Text style={styles.streakText}>{stats.current_streak}</Text>
-              </View>
-            ) : null}
-            <TouchableOpacity
-              style={styles.profileButton}
-              onPress={() => router.push('/(tabs)/profile')}
-            >
-              <Ionicons name="person" size={24} color={COLORS.white} />
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity
+            style={[styles.profileButton, { backgroundColor: colors.accent, borderColor: colors.border }]}
+            onPress={() => router.push('/(tabs)/profile')}
+          >
+            <Ionicons name="person" size={24} color="#FFFFFF" />
+          </TouchableOpacity>
         </View>
 
-        {/* Hero CTA */}
-        <TouchableOpacity
-          style={styles.heroCta}
-          onPress={() => router.push('/generate')}
-          activeOpacity={0.9}
-        >
-          <View style={styles.heroContent}>
-            <View style={styles.heroIcon}>
-              <Ionicons name="sparkles" size={32} color={COLORS.white} />
-            </View>
-            <View style={styles.heroText}>
-              <Text style={styles.heroTitle}>GENERATE STORY</Text>
-              <Text style={styles.heroSubtitle}>AI-POWERED CONTENT</Text>
-            </View>
-          </View>
-          <Ionicons name="arrow-forward" size={24} color={COLORS.white} />
-        </TouchableOpacity>
-
-        {/* Stats Grid */}
-        <Text style={styles.sectionTitle}>YOUR PROGRESS</Text>
+        {/* Stats Cards */}
         <View style={styles.statsGrid}>
-          <View style={[styles.statCard, styles.statCardBlack]}>
-            <Text style={styles.statNumberWhite}>{stats?.total_words || 0}</Text>
-            <Text style={styles.statLabelWhite}>WORDS</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statNumber}>{stats?.mastered_words || 0}</Text>
-            <Text style={styles.statLabel}>MASTERED</Text>
-          </View>
-          <View style={styles.statCard}>
-            <View style={styles.statWithIcon}>
-              <Ionicons name="flame" size={20} color={COLORS.accent} />
-              <Text style={styles.statNumber}>{stats?.current_streak || 0}</Text>
+          <View style={[styles.statCard, { backgroundColor: colors.white, borderColor: colors.border }]}>
+            <View style={[styles.statIconContainer, { backgroundColor: colors.accent }]}>
+              <Ionicons name="book" size={24} color="#FFFFFF" />
             </View>
-            <Text style={styles.statLabel}>STREAK</Text>
+            <Text style={[styles.statValue, { color: colors.textPrimary }]}>{stats?.words_learned || 0}</Text>
+            <Text style={[styles.statLabel, { color: colors.textMuted }]}>Words Learned</Text>
           </View>
-          <View style={[styles.statCard, dueReviews > 0 && styles.statCardAccent]}>
-            <Text style={[styles.statNumber, dueReviews > 0 && styles.statNumberWhite]}>
-              {dueReviews}
-            </Text>
-            <Text style={[styles.statLabel, dueReviews > 0 && styles.statLabelWhite]}>REVIEWS</Text>
+
+          <View style={[styles.statCard, { backgroundColor: colors.white, borderColor: colors.border }]}>
+            <View style={[styles.statIconContainer, { backgroundColor: '#FF6B6B' }]}>
+              <Ionicons name="flame" size={24} color="#FFFFFF" />
+            </View>
+            <Text style={[styles.statValue, { color: colors.textPrimary }]}>{stats?.current_streak || 0}</Text>
+            <Text style={[styles.statLabel, { color: colors.textMuted }]}>Day Streak</Text>
+          </View>
+
+          <View style={[styles.statCard, { backgroundColor: colors.white, borderColor: colors.border }]}>
+            <View style={[styles.statIconContainer, { backgroundColor: '#4ECDC4' }]}>
+              <Ionicons name="checkmark-circle" size={24} color="#FFFFFF" />
+            </View>
+            <Text style={[styles.statValue, { color: colors.textPrimary }]}>{stats?.total_reviews || 0}</Text>
+            <Text style={[styles.statLabel, { color: colors.textMuted }]}>Reviews Done</Text>
           </View>
         </View>
 
         {/* Quick Actions */}
-        {dueReviews > 0 && (
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>QUICK ACTIONS</Text>
+          
           <TouchableOpacity
-            style={styles.reviewBanner}
-            onPress={() => router.push('/review')}
+            style={[styles.actionCard, styles.primaryAction, { backgroundColor: colors.accent, borderColor: colors.border }]}
+            onPress={() => router.push('/generate')}
           >
-            <View style={styles.reviewBannerContent}>
-              <Ionicons name="flash" size={24} color={COLORS.black} />
-              <View>
-                <Text style={styles.reviewBannerTitle}>{dueReviews} WORDS READY</Text>
-                <Text style={styles.reviewBannerSubtitle}>TAP TO START REVIEW</Text>
+            <View style={styles.actionLeft}>
+              <Ionicons name="sparkles" size={28} color="#FFFFFF" />
+              <View style={styles.actionText}>
+                <Text style={styles.actionTitle}>Generate Story</Text>
+                <Text style={styles.actionSubtitle}>Create AI-powered stories</Text>
               </View>
             </View>
-            <Ionicons name="chevron-forward" size={24} color={COLORS.black} />
+            <Ionicons name="arrow-forward" size={24} color="#FFFFFF" />
           </TouchableOpacity>
+
+          {dueReviews > 0 && (
+            <TouchableOpacity
+              style={[styles.actionCard, { backgroundColor: colors.white, borderColor: colors.border }]}
+              onPress={() => router.push('/review')}
+            >
+              <View style={styles.actionLeft}>
+                <View style={[styles.actionIcon, { backgroundColor: '#FF6B6B' }]}>
+                  <Ionicons name="refresh" size={24} color="#FFFFFF" />
+                </View>
+                <View style={styles.actionText}>
+                  <Text style={[styles.actionTitleSmall, { color: colors.textPrimary }]}>Review Words</Text>
+                  <Text style={[styles.actionSubtitleSmall, { color: colors.textMuted }]}>{dueReviews} words due</Text>
+                </View>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* Word Groups */}
+        {dayGroups.length > 0 && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>WORD GROUPS</Text>
+              <TouchableOpacity onPress={() => router.push('/(tabs)/dictionary')}>
+                <Text style={[styles.seeAll, { color: colors.accent }]}>See All →</Text>
+              </TouchableOpacity>
+            </View>
+
+            {dayGroups.map((group) => (
+              <TouchableOpacity
+                key={group.dayName}
+                style={[styles.groupCard, { backgroundColor: colors.white, borderColor: colors.border, borderLeftColor: group.color }]}
+                onPress={() => router.push({
+                  pathname: '/group-detail',
+                  params: { dayName: group.dayName },
+                })}
+              >
+                <View style={[styles.groupIcon, { backgroundColor: group.color }]}>
+                  <Ionicons name={group.icon as any} size={24} color="#FFFFFF" />
+                </View>
+                <View style={styles.groupInfo}>
+                  <Text style={[styles.groupDay, { color: colors.textPrimary }]}>{group.dayName}</Text>
+                  <Text style={[styles.groupDate, { color: colors.textMuted }]}>{group.date}</Text>
+                </View>
+                <View style={[styles.groupBadge, { backgroundColor: colors.background }]}>
+                  <Text style={[styles.groupCount, { color: colors.textPrimary }]}>{group.wordCount}</Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
         )}
 
         {/* Recent Stories */}
         {recentStories.length > 0 && (
-          <>
-            <Text style={styles.sectionTitle}>RECENT STORIES</Text>
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>RECENT STORIES</Text>
+            </View>
+
             {recentStories.map((story) => (
               <TouchableOpacity
                 key={story.id}
-                style={styles.storyCard}
+                style={[styles.storyCard, { backgroundColor: colors.white, borderColor: colors.border }]}
                 onPress={() => router.push(`/story/${story.id}`)}
               >
+                <View style={[styles.storyIcon, { backgroundColor: colors.accent }]}>
+                  <Ionicons name="book-outline" size={20} color="#FFFFFF" />
+                </View>
                 <View style={styles.storyInfo}>
-                  <Text style={styles.storyTitle} numberOfLines={1}>
+                  <Text style={[styles.storyTitle, { color: colors.textPrimary }]} numberOfLines={1}>
                     {story.title}
                   </Text>
-                  <Text style={styles.storyMeta}>
-                    {story.language.toUpperCase()} / {story.topic.toUpperCase()}
+                  <Text style={[styles.storyDate, { color: colors.textMuted }]}>
+                    {format(parseISO(story.created_at), 'MMM d, yyyy')}
                   </Text>
                 </View>
-                <Ionicons name="chevron-forward" size={20} color={COLORS.black} />
+                <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
               </TouchableOpacity>
             ))}
-          </>
-        )}
-
-        {/* Empty State */}
-        {recentStories.length === 0 && (
-          <Card style={styles.emptyState} variant="elevated">
-            <Ionicons name="book-outline" size={48} color={COLORS.textMuted} />
-            <Text style={styles.emptyTitle}>NO STORIES YET</Text>
-            <Text style={styles.emptyText}>
-              Generate your first story to start learning!
-            </Text>
-            <Button
-              title="Generate Story"
-              onPress={() => router.push('/generate')}
-              variant="accent"
-              style={{ marginTop: SPACING.md }}
-            />
-          </Card>
+          </View>
         )}
       </ScrollView>
 
@@ -261,6 +373,13 @@ export default function HomeScreen() {
         onClose={handleCloseTips}
         language={user?.target_language || 'English'}
       />
+
+      {/* Feedback Modal */}
+      <FeedbackModal
+        visible={showFeedback}
+        onClose={handleCloseFeedback}
+        onSubmitSuccess={handleCloseFeedback}
+      />
     </SafeAreaView>
   );
 }
@@ -268,196 +387,194 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: COLORS.background,
-  },
-  loadingText: {
-    marginTop: SPACING.md,
-    fontSize: FONT_SIZES.sm,
-    color: COLORS.textSecondary,
-    fontWeight: '700',
-    letterSpacing: 2,
   },
   scrollContent: {
     padding: SPACING.lg,
-    paddingBottom: SPACING.xxl,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     marginBottom: SPACING.xl,
   },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.sm,
-  },
   greeting: {
-    fontSize: FONT_SIZES.sm,
-    color: COLORS.textSecondary,
-    fontWeight: '600',
-    letterSpacing: 2,
+    fontSize: FONT_SIZES.xs,
+    fontWeight: '700',
+    letterSpacing: 1.5,
+    marginBottom: SPACING.xs,
   },
   userName: {
-    fontSize: FONT_SIZES.xxxl,
+    fontSize: FONT_SIZES.xxl,
     fontWeight: '900',
-    color: COLORS.black,
     letterSpacing: 1,
   },
   profileButton: {
-    backgroundColor: COLORS.black,
     width: 48,
     height: 48,
     borderRadius: 24,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 3,
-    borderColor: COLORS.black,
     ...SHADOWS.small,
-  },
-  streakBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.white,
-    borderWidth: 3,
-    borderColor: COLORS.accent,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    gap: SPACING.xs,
-  },
-  streakText: {
-    fontSize: FONT_SIZES.xl,
-    fontWeight: '900',
-    color: COLORS.accent,
-  },
-  heroCta: {
-    backgroundColor: COLORS.black,
-    padding: SPACING.lg,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: SPACING.xl,
-    ...SHADOWS.md,
-  },
-  heroContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.md,
-  },
-  heroIcon: {
-    width: 56,
-    height: 56,
-    backgroundColor: COLORS.accent,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  heroText: {
-    gap: 2,
-  },
-  heroTitle: {
-    fontSize: FONT_SIZES.lg,
-    fontWeight: '900',
-    color: COLORS.white,
-    letterSpacing: 2,
-  },
-  heroSubtitle: {
-    fontSize: FONT_SIZES.xs,
-    color: COLORS.textLight,
-    letterSpacing: 1,
-    fontWeight: '600',
-  },
-  sectionTitle: {
-    fontSize: FONT_SIZES.sm,
-    fontWeight: '900',
-    color: COLORS.black,
-    marginBottom: SPACING.md,
-    letterSpacing: 2,
   },
   statsGrid: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: SPACING.sm,
+    gap: SPACING.md,
     marginBottom: SPACING.xl,
   },
   statCard: {
-    width: '48%',
-    backgroundColor: COLORS.white,
-    borderWidth: 2,
-    borderColor: COLORS.black,
+    flex: 1,
+    padding: SPACING.lg,
+    borderRadius: 16,
+    borderWidth: 3,
     alignItems: 'center',
-    paddingVertical: SPACING.lg,
+    ...SHADOWS.medium,
   },
-  statCardBlack: {
-    backgroundColor: COLORS.black,
-  },
-  statCardAccent: {
-    backgroundColor: COLORS.accent,
-    borderColor: COLORS.accent,
-  },
-  statWithIcon: {
-    flexDirection: 'row',
+  statIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
     alignItems: 'center',
-    gap: SPACING.xs,
+    marginBottom: SPACING.sm,
   },
-  statNumber: {
-    fontSize: FONT_SIZES.xxxl,
+  statValue: {
+    fontSize: FONT_SIZES.xxl,
     fontWeight: '900',
-    color: COLORS.black,
-  },
-  statNumberWhite: {
-    color: COLORS.white,
+    marginBottom: SPACING.xs,
   },
   statLabel: {
     fontSize: FONT_SIZES.xs,
-    color: COLORS.textSecondary,
     fontWeight: '700',
-    letterSpacing: 1,
-    marginTop: SPACING.xs,
+    textAlign: 'center',
+    letterSpacing: 0.5,
   },
-  statLabelWhite: {
-    color: COLORS.white,
+  section: {
+    marginBottom: SPACING.xl,
   },
-  reviewBanner: {
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: SPACING.md,
+  },
+  sectionTitle: {
+    fontSize: FONT_SIZES.lg,
+    fontWeight: '900',
+    letterSpacing: 1.5,
+  },
+  seeAll: {
+    fontSize: FONT_SIZES.sm,
+    fontWeight: '700',
+  },
+  actionCard: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: COLORS.warning,
-    padding: SPACING.md,
-    marginBottom: SPACING.xl,
-    borderWidth: 2,
-    borderColor: COLORS.black,
+    padding: SPACING.lg,
+    borderRadius: 16,
+    borderWidth: 3,
+    marginBottom: SPACING.md,
+    ...SHADOWS.medium,
   },
-  reviewBannerContent: {
+  primaryAction: {
+    padding: SPACING.xl,
+  },
+  actionLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.md,
   },
-  reviewBannerTitle: {
-    fontSize: FONT_SIZES.md,
+  actionIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  actionText: {
+    gap: SPACING.xs / 2,
+  },
+  actionTitle: {
+    fontSize: FONT_SIZES.lg,
     fontWeight: '900',
-    color: COLORS.black,
+    color: '#FFFFFF',
     letterSpacing: 1,
   },
-  reviewBannerSubtitle: {
-    fontSize: FONT_SIZES.xs,
-    color: COLORS.textSecondary,
+  actionSubtitle: {
+    fontSize: FONT_SIZES.sm,
     fontWeight: '600',
-    letterSpacing: 1,
+    color: 'rgba(255, 255, 255, 0.8)',
+  },
+  actionTitleSmall: {
+    fontSize: FONT_SIZES.md,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  actionSubtitleSmall: {
+    fontSize: FONT_SIZES.xs,
+    fontWeight: '600',
+  },
+  groupCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: SPACING.md,
+    borderRadius: 12,
+    borderWidth: 3,
+    borderLeftWidth: 6,
+    marginBottom: SPACING.sm,
+    ...SHADOWS.small,
+  },
+  groupIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: SPACING.md,
+  },
+  groupInfo: {
+    flex: 1,
+  },
+  groupDay: {
+    fontSize: FONT_SIZES.md,
+    fontWeight: '700',
+    marginBottom: SPACING.xs / 2,
+  },
+  groupDate: {
+    fontSize: FONT_SIZES.xs,
+    fontWeight: '600',
+  },
+  groupBadge: {
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    borderRadius: 12,
+  },
+  groupCount: {
+    fontSize: FONT_SIZES.md,
+    fontWeight: '900',
   },
   storyCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.white,
-    borderWidth: 2,
-    borderColor: COLORS.black,
     padding: SPACING.md,
+    borderRadius: 12,
+    borderWidth: 3,
     marginBottom: SPACING.sm,
+    ...SHADOWS.small,
+  },
+  storyIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: SPACING.md,
   },
   storyInfo: {
     flex: 1,
@@ -465,30 +582,10 @@ const styles = StyleSheet.create({
   storyTitle: {
     fontSize: FONT_SIZES.md,
     fontWeight: '700',
-    color: COLORS.black,
+    marginBottom: SPACING.xs / 2,
   },
-  storyMeta: {
+  storyDate: {
     fontSize: FONT_SIZES.xs,
-    color: COLORS.textSecondary,
-    marginTop: 2,
     fontWeight: '600',
-    letterSpacing: 1,
-  },
-  emptyState: {
-    alignItems: 'center',
-    paddingVertical: SPACING.xl,
-  },
-  emptyTitle: {
-    fontSize: FONT_SIZES.lg,
-    fontWeight: '900',
-    color: COLORS.black,
-    marginTop: SPACING.md,
-    letterSpacing: 2,
-  },
-  emptyText: {
-    fontSize: FONT_SIZES.sm,
-    color: COLORS.textSecondary,
-    textAlign: 'center',
-    marginTop: SPACING.xs,
   },
 });
