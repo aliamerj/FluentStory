@@ -1,155 +1,195 @@
 diff --git a/frontend/app/(tabs)/_layout.tsx b/frontend/app/(tabs)/_layout.tsx
-index a7f2194..d291249 100644
+index d291249..830e9d2 100644
 --- a/frontend/app/(tabs)/_layout.tsx
 +++ b/frontend/app/(tabs)/_layout.tsx
-@@ -55,16 +55,16 @@ export default function TabsLayout() {
-         }}
-       />
-       <Tabs.Screen
--        name="groups"
-+        name="profile"
-         options={{
--          title: 'Groups',
-+          title: 'Profile',
-           tabBarIcon: ({ color, size }) => (
--            <Ionicons name="grid" size={size} color={color} />
-+            <Ionicons name="person" size={size} color={color} />
-           ),
-         }}
-       />
-       <Tabs.Screen
--        name="profile"
-+        name="groups"
-         options={{
-           href: null,
-         }}
+@@ -2,23 +2,26 @@ import React from 'react';
+ import { Tabs } from 'expo-router';
+ import { View, Text, StyleSheet } from 'react-native';
+ import { Ionicons } from '@expo/vector-icons';
++import { useTheme } from '../../src/contexts/ThemeContext';
+ import { COLORS, FONT_SIZES, SPACING } from '../../src/constants/theme';
+ 
+ export default function TabsLayout() {
++  const { colors } = useTheme();
++
+   return (
+     <Tabs
+       screenOptions={{
+         headerShown: false,
+         tabBarStyle: {
+-          backgroundColor: COLORS.white,
++          backgroundColor: colors.white,
+           borderTopWidth: 3,
+-          borderTopColor: COLORS.black,
++          borderTopColor: colors.border,
+           height: 80,
+           paddingBottom: 15,
+           paddingTop: 10,
+         },
+-        tabBarActiveTintColor: COLORS.accent,
+-        tabBarInactiveTintColor: COLORS.textMuted,
++        tabBarActiveTintColor: colors.accent,
++        tabBarInactiveTintColor: colors.textMuted,
+         tabBarLabelStyle: {
+           fontSize: FONT_SIZES.xs,
+           fontWeight: '700',
 diff --git a/model.patch b/model.patch
-index 4fa0379..e69de29 100644
+index 80eb8bb..e69de29 100644
 --- a/model.patch
 +++ b/model.patch
-@@ -1,125 +0,0 @@
+@@ -1,155 +0,0 @@
+-diff --git a/frontend/app/(tabs)/_layout.tsx b/frontend/app/(tabs)/_layout.tsx
+-index a7f2194..d291249 100644
+---- a/frontend/app/(tabs)/_layout.tsx
+-+++ b/frontend/app/(tabs)/_layout.tsx
+-@@ -55,16 +55,16 @@ export default function TabsLayout() {
+-         }}
+-       />
+-       <Tabs.Screen
+--        name="groups"
+-+        name="profile"
+-         options={{
+--          title: 'Groups',
+-+          title: 'Profile',
+-           tabBarIcon: ({ color, size }) => (
+--            <Ionicons name="grid" size={size} color={color} />
+-+            <Ionicons name="person" size={size} color={color} />
+-           ),
+-         }}
+-       />
+-       <Tabs.Screen
+--        name="profile"
+-+        name="groups"
+-         options={{
+-           href: null,
+-         }}
 -diff --git a/model.patch b/model.patch
--index d2e1c2f..e69de29 100644
+-index 4fa0379..e69de29 100644
 ---- a/model.patch
 -+++ b/model.patch
--@@ -1,120 +0,0 @@
---diff --git a/frontend/app/(tabs)/profile.tsx b/frontend/app/(tabs)/profile.tsx
---index 7441fec..cb5963b 100644
------ a/frontend/app/(tabs)/profile.tsx
---+++ b/frontend/app/(tabs)/profile.tsx
---@@ -124,21 +124,21 @@ export default function ProfileScreen() {
---         </View>
--- 
---         {/* Stats Overview */}
----        <View style={styles.statsCard}>
---+        <View style={[styles.statsCard, { backgroundColor: colors.white, borderColor: colors.border }]}>
---           <View style={styles.statsRow}>
---             <View style={styles.statItem}>
----              <Text style={styles.statValue}>{user?.words_saved_count || 0}</Text>
----              <Text style={styles.statLabel}>WORDS</Text>
---+              <Text style={[styles.statValue, { color: colors.textPrimary }]}>{user?.words_saved_count || 0}</Text>
---+              <Text style={[styles.statLabel, { color: colors.textMuted }]}>WORDS</Text>
---             </View>
----            <View style={styles.statDivider} />
---+            <View style={[styles.statDivider, { backgroundColor: colors.borderLight }]} />
---             <View style={styles.statItem}>
----              <Text style={styles.statValue}>{stories.length}</Text>
----              <Text style={styles.statLabel}>STORIES</Text>
---+              <Text style={[styles.statValue, { color: colors.textPrimary }]}>{stories.length}</Text>
---+              <Text style={[styles.statLabel, { color: colors.textMuted }]}>STORIES</Text>
---             </View>
----            <View style={styles.statDivider} />
---+            <View style={[styles.statDivider, { backgroundColor: colors.borderLight }]} />
---             <View style={styles.statItem}>
----              <Text style={styles.statValue}>{user?.current_streak || 0}</Text>
----              <Text style={styles.statLabel}>STREAK</Text>
---+              <Text style={[styles.statValue, { color: colors.accent }]}>{user?.current_streak || 0}</Text>
---+              <Text style={[styles.statLabel, { color: colors.textMuted }]}>STREAK</Text>
---             </View>
---           </View>
---         </View>
+-@@ -1,125 +0,0 @@
 --diff --git a/model.patch b/model.patch
---index 6f11b9d..e69de29 100644
+--index d2e1c2f..e69de29 100644
 ----- a/model.patch
 --+++ b/model.patch
---@@ -1,80 +0,0 @@
+--@@ -1,120 +0,0 @@
+---diff --git a/frontend/app/(tabs)/profile.tsx b/frontend/app/(tabs)/profile.tsx
+---index 7441fec..cb5963b 100644
+------ a/frontend/app/(tabs)/profile.tsx
+---+++ b/frontend/app/(tabs)/profile.tsx
+---@@ -124,21 +124,21 @@ export default function ProfileScreen() {
+---         </View>
+--- 
+---         {/* Stats Overview */}
+----        <View style={styles.statsCard}>
+---+        <View style={[styles.statsCard, { backgroundColor: colors.white, borderColor: colors.border }]}>
+---           <View style={styles.statsRow}>
+---             <View style={styles.statItem}>
+----              <Text style={styles.statValue}>{user?.words_saved_count || 0}</Text>
+----              <Text style={styles.statLabel}>WORDS</Text>
+---+              <Text style={[styles.statValue, { color: colors.textPrimary }]}>{user?.words_saved_count || 0}</Text>
+---+              <Text style={[styles.statLabel, { color: colors.textMuted }]}>WORDS</Text>
+---             </View>
+----            <View style={styles.statDivider} />
+---+            <View style={[styles.statDivider, { backgroundColor: colors.borderLight }]} />
+---             <View style={styles.statItem}>
+----              <Text style={styles.statValue}>{stories.length}</Text>
+----              <Text style={styles.statLabel}>STORIES</Text>
+---+              <Text style={[styles.statValue, { color: colors.textPrimary }]}>{stories.length}</Text>
+---+              <Text style={[styles.statLabel, { color: colors.textMuted }]}>STORIES</Text>
+---             </View>
+----            <View style={styles.statDivider} />
+---+            <View style={[styles.statDivider, { backgroundColor: colors.borderLight }]} />
+---             <View style={styles.statItem}>
+----              <Text style={styles.statValue}>{user?.current_streak || 0}</Text>
+----              <Text style={styles.statLabel}>STREAK</Text>
+---+              <Text style={[styles.statValue, { color: colors.accent }]}>{user?.current_streak || 0}</Text>
+---+              <Text style={[styles.statLabel, { color: colors.textMuted }]}>STREAK</Text>
+---             </View>
+---           </View>
+---         </View>
 ---diff --git a/model.patch b/model.patch
----index 26ae4fd..e69de29 100644
+---index 6f11b9d..e69de29 100644
 ------ a/model.patch
 ---+++ b/model.patch
----@@ -1,52 +0,0 @@
-----diff --git a/backend/server.py b/backend/server.py
-----index 5eab65a..bd8ed0c 100644
-------- a/backend/server.py
-----+++ b/backend/server.py
-----@@ -631,6 +631,47 @@ async def root():
----- async def health_check():
-----     return {"status": "healthy", "timestamp": datetime.utcnow().isoformat()}
+---@@ -1,80 +0,0 @@
+----diff --git a/model.patch b/model.patch
+----index 26ae4fd..e69de29 100644
+------- a/model.patch
+----+++ b/model.patch
+----@@ -1,52 +0,0 @@
+-----diff --git a/backend/server.py b/backend/server.py
+-----index 5eab65a..bd8ed0c 100644
+-------- a/backend/server.py
+-----+++ b/backend/server.py
+-----@@ -631,6 +631,47 @@ async def root():
+----- async def health_check():
+-----     return {"status": "healthy", "timestamp": datetime.utcnow().isoformat()}
+----- 
+-----+# ============= FEEDBACK ENDPOINTS =============
+-----+
+-----+@api_router.post("/feedback/submit", response_model=FeedbackResponse)
+-----+async def submit_feedback(user_id: str, feedback_data: FeedbackCreate):
+-----+    """Submit user feedback"""
+-----+    user = await db.users.find_one({"id": user_id})
+-----+    if not user:
+-----+        raise HTTPException(status_code=404, detail="User not found")
+-----+    
+-----+    # Create feedback record
+-----+    feedback_id = str(uuid.uuid4())
+-----+    feedback = {
+-----+        "id": feedback_id,
+-----+        "user_id": user_id,
+-----+        "rating": feedback_data.rating,
+-----+        "message": feedback_data.message,
+-----+        "category": feedback_data.category,
+-----+        "user_context": feedback_data.user_context,
+-----+        "created_at": datetime.utcnow().isoformat()
+-----+    }
+-----+    
+-----+    await db.feedback.insert_one(feedback)
+-----+    
+-----+    if '_id' in feedback:
+-----+        del feedback['_id']
+-----+    
+-----+    return FeedbackResponse(**feedback)
+-----+
+-----+@api_router.get("/feedback/{user_id}", response_model=List[FeedbackResponse])
+-----+async def get_user_feedback(user_id: str, limit: int = 50):
+-----+    """Get all feedback from a user (admin use)"""
+-----+    feedbacks = await db.feedback.find({"user_id": user_id}).sort("created_at", -1).limit(limit).to_list(limit)
+-----+    
+-----+    result = []
+-----+    for feedback in feedbacks:
+-----+        if '_id' in feedback:
+-----+            del feedback['_id']
+-----+        result.append(FeedbackResponse(**feedback))
+-----+    
+-----+    return result
+-----+
+----- # ============= TEXT-TO-SPEECH ENDPOINT =============
+----- 
+----- class FeedbackCreate(BaseModel):
+----diff --git a/test_result.md b/test_result.md
+----index 80b98b4..26b913e 100644
+------- a/test_result.md
+----+++ b/test_result.md
+----@@ -189,6 +189,18 @@ backend:
+----         - agent: "main"
+----         - comment: "Implemented getDue and submit endpoints with proper mastery level progression"
 ---- 
-----+# ============= FEEDBACK ENDPOINTS =============
+----+  - task: "Feedback Collection API"
+----+    implemented: true
+----+    working: true
+----+    file: "server.py"
+----+    stuck_count: 0
+----+    priority: "high"
+----+    needs_retesting: false
+----+    status_history:
+----+        - working: true
+----+        - agent: "main"
+----+        - comment: "Created feedback endpoints - POST /api/feedback/submit and GET /api/feedback/{user_id}. Stores feedback with rating, message, category, and user context in MongoDB"
 ----+
-----+@api_router.post("/feedback/submit", response_model=FeedbackResponse)
-----+async def submit_feedback(user_id: str, feedback_data: FeedbackCreate):
-----+    """Submit user feedback"""
-----+    user = await db.users.find_one({"id": user_id})
-----+    if not user:
-----+        raise HTTPException(status_code=404, detail="User not found")
-----+    
-----+    # Create feedback record
-----+    feedback_id = str(uuid.uuid4())
-----+    feedback = {
-----+        "id": feedback_id,
-----+        "user_id": user_id,
-----+        "rating": feedback_data.rating,
-----+        "message": feedback_data.message,
-----+        "category": feedback_data.category,
-----+        "user_context": feedback_data.user_context,
-----+        "created_at": datetime.utcnow().isoformat()
-----+    }
-----+    
-----+    await db.feedback.insert_one(feedback)
-----+    
-----+    if '_id' in feedback:
-----+        del feedback['_id']
-----+    
-----+    return FeedbackResponse(**feedback)
-----+
-----+@api_router.get("/feedback/{user_id}", response_model=List[FeedbackResponse])
-----+async def get_user_feedback(user_id: str, limit: int = 50):
-----+    """Get all feedback from a user (admin use)"""
-----+    feedbacks = await db.feedback.find({"user_id": user_id}).sort("created_at", -1).limit(limit).to_list(limit)
-----+    
-----+    result = []
-----+    for feedback in feedbacks:
-----+        if '_id' in feedback:
-----+            del feedback['_id']
-----+        result.append(FeedbackResponse(**feedback))
-----+    
-----+    return result
-----+
----- # ============= TEXT-TO-SPEECH ENDPOINT =============
----- 
----- class FeedbackCreate(BaseModel):
----diff --git a/test_result.md b/test_result.md
----index 80b98b4..26b913e 100644
------- a/test_result.md
----+++ b/test_result.md
----@@ -189,6 +189,18 @@ backend:
----         - agent: "main"
----         - comment: "Implemented getDue and submit endpoints with proper mastery level progression"
---- 
----+  - task: "Feedback Collection API"
----+    implemented: true
----+    working: true
----+    file: "server.py"
----+    stuck_count: 0
----+    priority: "high"
----+    needs_retesting: false
----+    status_history:
----+        - working: true
----+        - agent: "main"
----+        - comment: "Created feedback endpoints - POST /api/feedback/submit and GET /api/feedback/{user_id}. Stores feedback with rating, message, category, and user context in MongoDB"
----+
---- frontend:
----   - task: "Login Screen"
----     implemented: true
+---- frontend:
+----   - task: "Login Screen"
+----     implemented: true
