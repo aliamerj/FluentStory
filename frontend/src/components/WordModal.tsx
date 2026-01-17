@@ -10,7 +10,8 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Speech from 'expo-speech';
-import { COLORS, SPACING, FONT_SIZES } from '../constants/theme';
+import { useTheme } from '../contexts/ThemeContext';
+import { SPACING, FONT_SIZES } from '../constants/theme';
 import { Button } from './Button';
 
 interface WordModalProps {
@@ -61,6 +62,7 @@ export const WordModal: React.FC<WordModalProps> = ({
   onRemove,
   isLoading = false,
 }) => {
+  const { colors, isDarkMode } = useTheme();
   const [isSaving, setIsSaving] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
 
@@ -113,39 +115,39 @@ export const WordModal: React.FC<WordModalProps> = ({
       <TouchableWithoutFeedback onPress={onClose}>
         <View style={styles.overlay}>
           <TouchableWithoutFeedback>
-            <View style={styles.content}>
-              <View style={styles.handle} />
+            <View style={[styles.content, { backgroundColor: colors.white, borderTopColor: colors.border }]}>
+              <View style={[styles.handle, { backgroundColor: colors.border }]} />
               
               <View style={styles.header}>
-                <Text style={styles.word}>{word}</Text>
-                <TouchableOpacity onPress={handleSpeak} style={styles.speakButton}>
+                <Text style={[styles.word, { color: colors.textPrimary }]}>{word}</Text>
+                <TouchableOpacity onPress={handleSpeak} style={[styles.speakButton, { backgroundColor: colors.accent }]}>
                   {isSpeaking ? (
-                    <ActivityIndicator size="small" color={COLORS.white} />
+                    <ActivityIndicator size="small" color="#FFFFFF" />
                   ) : (
-                    <Ionicons name="volume-high" size={24} color={COLORS.white} />
+                    <Ionicons name="volume-high" size={24} color="#FFFFFF" />
                   )}
                 </TouchableOpacity>
               </View>
 
               {isLoading ? (
                 <View style={styles.loadingContainer}>
-                  <ActivityIndicator size="small" color={COLORS.black} />
-                  <Text style={styles.loadingText}>TRANSLATING...</Text>
+                  <ActivityIndicator size="small" color={colors.textPrimary} />
+                  <Text style={[styles.loadingText, { color: colors.textSecondary }]}>TRANSLATING...</Text>
                 </View>
               ) : (
-                <Text style={styles.translation}>{translation || 'Translation unavailable'}</Text>
+                <Text style={[styles.translation, { color: colors.accent }]}>{translation || 'Translation unavailable'}</Text>
               )}
 
-              <View style={styles.contextContainer}>
-                <Text style={styles.contextLabel}>CONTEXT</Text>
-                <Text style={styles.contextSentence}>{contextSentence}</Text>
+              <View style={[styles.contextContainer, { backgroundColor: colors.background, borderColor: colors.borderLight }]}>
+                <Text style={[styles.contextLabel, { color: colors.textMuted }]}>CONTEXT</Text>
+                <Text style={[styles.contextSentence, { color: colors.textSecondary }]}>{contextSentence}</Text>
               </View>
 
               <View style={styles.actions}>
                 {isAlreadySaved ? (
                   <>
-                    <View style={styles.savedBadge}>
-                      <Ionicons name="checkmark" size={20} color={COLORS.white} />
+                    <View style={[styles.savedBadge, { backgroundColor: colors.success }]}>
+                      <Ionicons name="checkmark" size={20} color="#FFFFFF" />
                       <Text style={styles.savedText}>SAVED</Text>
                     </View>
                     {onRemove && (
@@ -165,7 +167,7 @@ export const WordModal: React.FC<WordModalProps> = ({
                     fullWidth
                     loading={isSaving}
                     variant="accent"
-                    icon={<Ionicons name="bookmark" size={18} color={COLORS.white} />}
+                    icon={<Ionicons name="bookmark" size={18} color="#FFFFFF" />}
                   />
                 )}
               </View>
@@ -184,16 +186,13 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   content: {
-    backgroundColor: COLORS.white,
     padding: SPACING.lg,
     paddingBottom: SPACING.xxl,
     borderTopWidth: 4,
-    borderTopColor: COLORS.black,
   },
   handle: {
     width: 60,
     height: 4,
-    backgroundColor: COLORS.black,
     alignSelf: 'center',
     marginBottom: SPACING.lg,
   },
@@ -206,13 +205,11 @@ const styles = StyleSheet.create({
   word: {
     fontSize: FONT_SIZES.title,
     fontWeight: '900',
-    color: COLORS.black,
     textTransform: 'uppercase',
   },
   speakButton: {
     width: 50,
     height: 50,
-    backgroundColor: COLORS.black,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -223,34 +220,28 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.md,
   },
   loadingText: {
-    color: COLORS.textSecondary,
     fontSize: FONT_SIZES.sm,
     fontWeight: '600',
     letterSpacing: 1,
   },
   translation: {
     fontSize: FONT_SIZES.xxl,
-    color: COLORS.accent,
     fontWeight: '700',
     marginBottom: SPACING.lg,
   },
   contextContainer: {
-    backgroundColor: COLORS.backgroundAlt,
     padding: SPACING.md,
     borderWidth: 2,
-    borderColor: COLORS.borderMuted,
     marginBottom: SPACING.lg,
   },
   contextLabel: {
     fontSize: FONT_SIZES.xs,
-    color: COLORS.textMuted,
     fontWeight: '700',
     letterSpacing: 1,
     marginBottom: SPACING.xs,
   },
   contextSentence: {
     fontSize: FONT_SIZES.md,
-    color: COLORS.textSecondary,
     fontStyle: 'italic',
     lineHeight: 24,
   },
@@ -264,12 +255,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.xs,
-    backgroundColor: COLORS.success,
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
   },
   savedText: {
-    color: COLORS.white,
+    color: '#FFFFFF',
     fontSize: FONT_SIZES.sm,
     fontWeight: '700',
     letterSpacing: 1,
