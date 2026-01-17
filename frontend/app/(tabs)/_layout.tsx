@@ -3,6 +3,7 @@ import { Tabs } from 'expo-router';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../src/contexts/ThemeContext';
+import { useLocalization } from '../../src/contexts/LocalizationContext';
 import { COLORS, FONT_SIZES, SPACING } from '../../src/constants/theme';
 
 export default function TabsLayout() {
