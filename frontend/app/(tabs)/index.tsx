@@ -256,6 +256,11 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: SPACING.xl,
   },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+  },
   greeting: {
     fontSize: FONT_SIZES.sm,
     color: COLORS.textSecondary,
@@ -267,6 +272,17 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     color: COLORS.black,
     letterSpacing: 1,
+  },
+  profileButton: {
+    backgroundColor: COLORS.black,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: COLORS.black,
+    ...SHADOWS.small,
   },
   streakBadge: {
     flexDirection: 'row',
