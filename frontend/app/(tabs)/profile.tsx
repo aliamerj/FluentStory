@@ -35,6 +35,7 @@ export default function ProfileScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [notifications, setNotifications] = useState(true);
+  const [feedbackModalVisible, setFeedbackModalVisible] = useState(false);
 
   const loadData = async () => {
     if (!user) return;
