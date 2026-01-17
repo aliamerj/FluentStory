@@ -32,6 +32,7 @@ function RootLayoutContent() {
         <Stack.Screen name="generate" options={{ presentation: 'modal' }} />
         <Stack.Screen name="review" options={{ presentation: 'card' }} />
         <Stack.Screen name="group-detail" options={{ presentation: 'card' }} />
+        <Stack.Screen name="study-mode" options={{ presentation: 'card' }} />
       </Stack>
     </View>
   );
