@@ -327,6 +327,53 @@ export default function ProfileScreen() {
           Alert.alert('Success', 'Thank you for your feedback!');
         }}
       />
+
+      {/* Language Selector Modal */}
+      <Modal
+        visible={languageModalVisible}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setLanguageModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <TouchableOpacity
+            style={styles.backdrop}
+            activeOpacity={1}
+            onPress={() => setLanguageModalVisible(false)}
+          />
+          <View style={[styles.modalContent, { backgroundColor: colors.white, borderColor: colors.border }]}>
+            <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
+              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>SELECT LANGUAGE</Text>
+              <TouchableOpacity onPress={() => setLanguageModalVisible(false)}>
+                <Ionicons name="close" size={24} color={colors.textPrimary} />
+              </TouchableOpacity>
+            </View>
+            <ScrollView contentContainerStyle={styles.languageList}>
+              {(Object.keys(languageNames) as Array<keyof typeof languageNames>).map((lang) => (
+                <TouchableOpacity
+                  key={lang}
+                  style={[
+                    styles.languageOption,
+                    { borderBottomColor: colors.borderLight },
+                    language === lang && { backgroundColor: colors.background },
+                  ]}
+                  onPress={() => {
+                    setLanguage(lang);
+                    setLanguageModalVisible(false);
+                  }}
+                >
+                  <Text style={[styles.languageText, { color: colors.textPrimary }]}>
+                    {languageNames[lang]}
+                  </Text>
+                  {language === lang && (
+                    <Ionicons name="checkmark-circle" size={24} color={colors.accent} />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
