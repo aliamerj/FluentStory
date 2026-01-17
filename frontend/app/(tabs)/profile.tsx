@@ -124,21 +124,21 @@ export default function ProfileScreen() {
         </View>
 
         {/* Stats Overview */}
-        <View style={styles.statsCard}>
+        <View style={[styles.statsCard, { backgroundColor: colors.white, borderColor: colors.border }]}>
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>{user?.words_saved_count || 0}</Text>
-              <Text style={styles.statLabel}>WORDS</Text>
+              <Text style={[styles.statValue, { color: colors.textPrimary }]}>{user?.words_saved_count || 0}</Text>
+              <Text style={[styles.statLabel, { color: colors.textMuted }]}>WORDS</Text>
             </View>
-            <View style={styles.statDivider} />
+            <View style={[styles.statDivider, { backgroundColor: colors.borderLight }]} />
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>{stories.length}</Text>
-              <Text style={styles.statLabel}>STORIES</Text>
+              <Text style={[styles.statValue, { color: colors.textPrimary }]}>{stories.length}</Text>
+              <Text style={[styles.statLabel, { color: colors.textMuted }]}>STORIES</Text>
             </View>
-            <View style={styles.statDivider} />
+            <View style={[styles.statDivider, { backgroundColor: colors.borderLight }]} />
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>{user?.current_streak || 0}</Text>
-              <Text style={styles.statLabel}>STREAK</Text>
+              <Text style={[styles.statValue, { color: colors.accent }]}>{user?.current_streak || 0}</Text>
+              <Text style={[styles.statLabel, { color: colors.textMuted }]}>STREAK</Text>
             </View>
           </View>
         </View>
