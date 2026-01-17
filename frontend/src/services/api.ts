@@ -3,7 +3,7 @@ import Constants from 'expo-constants';
 
 const BASE_URL = Constants.expoConfig?.extra?.EXPO_PUBLIC_BACKEND_URL || 
                  process.env.EXPO_PUBLIC_BACKEND_URL || 
-                 'https://wordsage-2.preview.emergentagent.com';
+                 'https://wordgroups-daily.preview.emergentagent.com';
 
 export const api = axios.create({
   baseURL: `${BASE_URL}/api`,
