@@ -133,8 +133,8 @@ export default function DictionaryScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       <View style={styles.header}>
-        <Text style={[styles.title, { color: colors.textPrimary }]}>MY WORDS</Text>
-        <Text style={[styles.subtitle, { color: colors.textMuted }]}>{filteredWords.length} words</Text>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>{t.myWords}</Text>
+        <Text style={[styles.subtitle, { color: colors.textMuted }]}>{filteredWords.length} {t.words.toLowerCase()}</Text>
       </View>
 
       {/* Search Bar */}
@@ -142,7 +142,7 @@ export default function DictionaryScreen() {
         <Ionicons name="search" size={20} color={colors.textMuted} />
         <TextInput
           style={[styles.searchInput, { color: colors.textPrimary }]}
-          placeholder="Search words..."
+          placeholder={t.searchWords}
           placeholderTextColor={colors.textMuted}
           value={searchQuery}
           onChangeText={setSearchQuery}
@@ -160,19 +160,19 @@ export default function DictionaryScreen() {
           style={[styles.filterTab, filter === 'all' && { backgroundColor: colors.accent, borderColor: colors.accent }]}
           onPress={() => setFilter('all')}
         >
-          <Text style={[styles.filterText, { color: filter === 'all' ? '#FFFFFF' : colors.textMuted }]}>All</Text>
+          <Text style={[styles.filterText, { color: filter === 'all' ? '#FFFFFF' : colors.textMuted }]}>{t.all}</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.filterTab, filter === 'learning' && { backgroundColor: colors.accent, borderColor: colors.accent }]}
           onPress={() => setFilter('learning')}
         >
-          <Text style={[styles.filterText, { color: filter === 'learning' ? '#FFFFFF' : colors.textMuted }]}>Learning</Text>
+          <Text style={[styles.filterText, { color: filter === 'learning' ? '#FFFFFF' : colors.textMuted }]}>{t.learning}</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.filterTab, filter === 'mastered' && { backgroundColor: colors.accent, borderColor: colors.accent }]}
           onPress={() => setFilter('mastered')}
         >
-          <Text style={[styles.filterText, { color: filter === 'mastered' ? '#FFFFFF' : colors.textMuted }]}>Mastered</Text>
+          <Text style={[styles.filterText, { color: filter === 'mastered' ? '#FFFFFF' : colors.textMuted }]}>{t.mastered}</Text>
         </TouchableOpacity>
       </View>
 
