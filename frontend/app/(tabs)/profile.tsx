@@ -90,7 +90,7 @@ export default function ProfileScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -98,27 +98,27 @@ export default function ProfileScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor={COLORS.black}
+            tintColor={colors.black}
           />
         }
       >
         {/* Profile Header */}
-        <View style={styles.header}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>
+        <View style={[styles.header, { backgroundColor: colors.white, borderColor: colors.border }]}>
+          <View style={[styles.avatar, { backgroundColor: colors.accent, borderColor: colors.border }]}>
+            <Text style={[styles.avatarText, { color: COLORS.white }]}>
               {user?.email?.charAt(0).toUpperCase() || 'U'}
             </Text>
           </View>
-          <Text style={styles.email}>{user?.email?.toUpperCase()}</Text>
+          <Text style={[styles.email, { color: colors.textPrimary }]}>{user?.email?.toUpperCase()}</Text>
           <View style={styles.badges}>
             {user?.is_premium && (
-              <View style={styles.premiumBadge}>
+              <View style={[styles.premiumBadge, { backgroundColor: colors.accent, borderColor: colors.border }]}>
                 <Ionicons name="diamond" size={14} color={COLORS.white} />
                 <Text style={styles.premiumText}>PREMIUM</Text>
               </View>
             )}
-            <View style={styles.levelBadge}>
-              <Text style={styles.levelText}>{user?.proficiency_level?.toUpperCase()}</Text>
+            <View style={[styles.levelBadge, { backgroundColor: colors.white, borderColor: colors.border }]}>
+              <Text style={[styles.levelText, { color: colors.black }]}>{user?.proficiency_level?.toUpperCase()}</Text>
             </View>
           </View>
         </View>
