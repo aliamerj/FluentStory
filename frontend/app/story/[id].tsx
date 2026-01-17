@@ -16,6 +16,7 @@ import { useAuthStore } from '../../src/store/authStore';
 import { storyApi, wordApi } from '../../src/services/api';
 import { WordModal } from '../../src/components/WordModal';
 import { useTheme } from '../../src/contexts/ThemeContext';
+import { useLocalization } from '../../src/contexts/LocalizationContext';
 import { SPACING, FONT_SIZES, SHADOWS } from '../../src/constants/theme';
 
 interface Story {
@@ -59,7 +60,8 @@ export default function StoryScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
   const { user } = useAuthStore();
-  const { colors } = useTheme();
+  const { colors, isDarkMode } = useTheme();
+  const { t } = useLocalization();
 
   const [story, setStory] = useState<Story | null>(null);
   const [savedWords, setSavedWords] = useState<Set<string>>(new Set());
@@ -204,11 +206,12 @@ export default function StoryScreen() {
         <Text
           style={[
             styles.word,
-            isSaved && styles.savedWord,
+            { color: colors.textPrimary },
+            isSaved && [styles.savedWord, { backgroundColor: `${colors.accent}20`, borderBottomColor: colors.accent }],
           ]}
         >
           {word.replace(/[^\p{L}\p{M}'-]/gu, '')}
-          <Text style={styles.punctuation}>{punctuation} </Text>
+          <Text style={[styles.punctuation, { color: colors.textPrimary }]}>{punctuation} </Text>
         </Text>
       </TouchableOpacity>
     );
@@ -231,72 +234,72 @@ export default function StoryScreen() {
 
   if (isLoading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={COLORS.black} />
-        <Text style={styles.loadingText}>LOADING STORY...</Text>
+      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.accent} />
+        <Text style={[styles.loadingText, { color: colors.textSecondary }]}>{t.loading.toUpperCase()}...</Text>
       </View>
     );
   }
 
   if (!story) {
     return (
-      <View style={styles.errorContainer}>
-        <Ionicons name="alert-circle" size={48} color={COLORS.error} />
-        <Text style={styles.errorText}>STORY NOT FOUND</Text>
+      <View style={[styles.errorContainer, { backgroundColor: colors.background }]}>
+        <Ionicons name="alert-circle" size={48} color={colors.error} />
+        <Text style={[styles.errorText, { color: colors.textPrimary }]}>STORY NOT FOUND</Text>
         <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.backLink}>GO BACK</Text>
+          <Text style={[styles.backLink, { color: colors.accent }]}>{t.back.toUpperCase()}</Text>
         </TouchableOpacity>
       </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { borderBottomColor: colors.border, backgroundColor: colors.white }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.headerButton}>
-          <Ionicons name="arrow-back" size={24} color={COLORS.black} />
+          <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
         <View style={styles.headerInfo}>
-          <Text style={styles.headerTitle} numberOfLines={1}>
+          <Text style={[styles.headerTitle, { color: colors.textPrimary }]} numberOfLines={1}>
             {story.title}
           </Text>
-          <Text style={styles.headerMeta}>
+          <Text style={[styles.headerMeta, { color: colors.textSecondary }]}>
             {story.language.toUpperCase()} / {story.level.toUpperCase()}
           </Text>
         </View>
         <TouchableOpacity onPress={handleShare} style={styles.headerButton}>
-          <Ionicons name="share-outline" size={24} color={COLORS.black} />
+          <Ionicons name="share-outline" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
       </View>
 
       {/* Audio Controls */}
-      <View style={styles.audioControls}>
+      <View style={[styles.audioControls, { backgroundColor: isDarkMode ? colors.white : colors.black }]}>
         <TouchableOpacity 
           onPress={handlePlayPause} 
-          style={styles.playButton}
+          style={[styles.playButton, { backgroundColor: colors.accent }]}
         >
           <Ionicons
             name={isPlaying ? 'pause' : 'play'}
             size={28}
-            color={COLORS.white}
+            color="#FFFFFF"
           />
         </TouchableOpacity>
         <View style={styles.audioInfo}>
-          <Text style={styles.audioTitle}>
+          <Text style={[styles.audioTitle, { color: isDarkMode ? colors.textPrimary : '#FFFFFF' }]}>
             {isPlaying ? 'NOW PLAYING' : 'TEXT-TO-SPEECH'}
           </Text>
-          <Text style={styles.audioSubtitle}>TAP TO LISTEN</Text>
+          <Text style={[styles.audioSubtitle, { color: isDarkMode ? colors.textMuted : '#AAAAAA' }]}>TAP TO LISTEN</Text>
         </View>
-        <TouchableOpacity onPress={handleSpeedChange} style={styles.speedButton}>
+        <TouchableOpacity onPress={handleSpeedChange} style={[styles.speedButton, { backgroundColor: colors.accent }]}>
           <Text style={styles.speedText}>{playbackSpeed}x</Text>
         </TouchableOpacity>
       </View>
 
       {/* Instruction */}
-      <View style={styles.instructionBar}>
-        <Ionicons name="finger-print" size={16} color={COLORS.accent} />
-        <Text style={styles.instructionText}>TAP ANY WORD TO TRANSLATE</Text>
+      <View style={[styles.instructionBar, { backgroundColor: colors.white, borderBottomColor: colors.borderLight }]}>
+        <Ionicons name="finger-print" size={16} color={colors.accent} />
+        <Text style={[styles.instructionText, { color: colors.textSecondary }]}>TAP ANY WORD TO TRANSLATE</Text>
       </View>
 
       {/* Story Content */}
@@ -304,7 +307,7 @@ export default function StoryScreen() {
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.storyContent}>
+        <View style={[styles.storyContent, { backgroundColor: colors.white, borderColor: colors.border }]}>
           {renderContent()}
         </View>
       </ScrollView>
@@ -329,18 +332,15 @@ export default function StoryScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: COLORS.background,
   },
   loadingText: {
     marginTop: SPACING.md,
     fontSize: FONT_SIZES.sm,
-    color: COLORS.textSecondary,
     fontWeight: '700',
     letterSpacing: 2,
   },
@@ -348,19 +348,16 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: COLORS.background,
     padding: SPACING.lg,
   },
   errorText: {
     fontSize: FONT_SIZES.lg,
     fontWeight: '900',
-    color: COLORS.black,
     marginTop: SPACING.md,
     letterSpacing: 2,
   },
   backLink: {
     fontSize: FONT_SIZES.sm,
-    color: COLORS.accent,
     marginTop: SPACING.md,
     fontWeight: '700',
     letterSpacing: 1,
@@ -371,8 +368,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.sm,
     paddingVertical: SPACING.md,
     borderBottomWidth: 3,
-    borderBottomColor: COLORS.black,
-    backgroundColor: COLORS.white,
   },
   headerButton: {
     width: 44,
@@ -387,12 +382,10 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: FONT_SIZES.md,
     fontWeight: '900',
-    color: COLORS.black,
     letterSpacing: 1,
   },
   headerMeta: {
     fontSize: FONT_SIZES.xs,
-    color: COLORS.textSecondary,
     marginTop: 2,
     fontWeight: '600',
     letterSpacing: 1,
@@ -400,14 +393,12 @@ const styles = StyleSheet.create({
   audioControls: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.black,
     padding: SPACING.md,
     gap: SPACING.md,
   },
   playButton: {
     width: 56,
     height: 56,
-    backgroundColor: COLORS.accent,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -417,24 +408,21 @@ const styles = StyleSheet.create({
   audioTitle: {
     fontSize: FONT_SIZES.sm,
     fontWeight: '700',
-    color: COLORS.white,
     letterSpacing: 1,
   },
   audioSubtitle: {
     fontSize: FONT_SIZES.xs,
-    color: COLORS.textLight,
     fontWeight: '600',
     letterSpacing: 1,
   },
   speedButton: {
-    backgroundColor: COLORS.accent,
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
   },
   speedText: {
     fontSize: FONT_SIZES.sm,
     fontWeight: '700',
-    color: COLORS.white,
+    color: '#FFFFFF',
     letterSpacing: 1,
   },
   instructionBar: {
@@ -443,13 +431,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: SPACING.sm,
     paddingVertical: SPACING.sm,
-    backgroundColor: COLORS.backgroundAlt,
     borderBottomWidth: 2,
-    borderBottomColor: COLORS.borderLight,
   },
   instructionText: {
     fontSize: FONT_SIZES.xs,
-    color: COLORS.textSecondary,
     fontWeight: '700',
     letterSpacing: 1,
   },
@@ -458,10 +443,8 @@ const styles = StyleSheet.create({
     paddingBottom: SPACING.xxl,
   },
   storyContent: {
-    backgroundColor: COLORS.white,
     padding: SPACING.lg,
     borderWidth: 2,
-    borderColor: COLORS.black,
     ...SHADOWS.sm,
   },
   sentenceContainer: {
@@ -472,14 +455,9 @@ const styles = StyleSheet.create({
   word: {
     fontSize: FONT_SIZES.lg,
     lineHeight: 32,
-    color: COLORS.black,
   },
   savedWord: {
-    backgroundColor: COLORS.saved,
     borderBottomWidth: 2,
-    borderBottomColor: COLORS.accent,
   },
-  punctuation: {
-    color: COLORS.black,
-  },
+  punctuation: {},
 });
