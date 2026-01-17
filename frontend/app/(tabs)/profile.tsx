@@ -16,6 +16,7 @@ import { useAuthStore } from '../../src/store/authStore';
 import { statsApi, storyApi } from '../../src/services/api';
 import { Card } from '../../src/components/Card';
 import { Button } from '../../src/components/Button';
+import { FeedbackModal } from '../../src/components/FeedbackModal';
 import { COLORS, SPACING, FONT_SIZES, SHADOWS } from '../../src/constants/theme';
 
 interface Story {
