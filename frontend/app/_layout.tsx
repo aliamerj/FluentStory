@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { View, StyleSheet } from 'react-native';
 import { useAuthStore } from '../src/store/authStore';
 import { ThemeProvider, useTheme } from '../src/contexts/ThemeContext';
+import { LocalizationProvider } from '../src/contexts/LocalizationContext';
 
 function RootLayoutContent() {
   const { loadUser } = useAuthStore();
@@ -38,9 +39,11 @@ function RootLayoutContent() {
 
 export default function RootLayout() {
   return (
-    <ThemeProvider>
-      <RootLayoutContent />
-    </ThemeProvider>
+    <LocalizationProvider>
+      <ThemeProvider>
+        <RootLayoutContent />
+      </ThemeProvider>
+    </LocalizationProvider>
   );
 }
 
