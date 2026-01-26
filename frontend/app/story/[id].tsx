@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,17 +7,22 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Share,
+  Dimensions,
+  Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import * as Speech from 'expo-speech';
+import { Audio } from 'expo-av';
 import { useAuthStore } from '../../src/store/authStore';
-import { storyApi, wordApi } from '../../src/services/api';
+import { storyApi, wordApi, ttsApi } from '../../src/services/api';
 import { WordModal } from '../../src/components/WordModal';
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { useLocalization } from '../../src/contexts/LocalizationContext';
 import { SPACING, FONT_SIZES, SHADOWS } from '../../src/constants/theme';
+import * as FileSystem from 'expo-file-system';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 interface Story {
   id: string;
@@ -33,27 +38,22 @@ interface SavedWord {
   word: string;
 }
 
-// Map language names to speech codes
-const getLanguageCode = (language: string): string => {
-  const langMap: { [key: string]: string } = {
-    'English': 'en-US',
-    'Spanish': 'es-ES',
-    'French': 'fr-FR',
-    'German': 'de-DE',
-    'Italian': 'it-IT',
-    'Portuguese': 'pt-BR',
-    'Russian': 'ru-RU',
-    'Chinese': 'zh-CN',
-    'Japanese': 'ja-JP',
-    'Korean': 'ko-KR',
-    'Arabic': 'ar-SA',
-    'Hindi': 'hi-IN',
-    'Dutch': 'nl-NL',
-    'Polish': 'pl-PL',
-    'Swedish': 'sv-SE',
-    'Turkish': 'tr-TR',
+// Voice options for different languages
+const getVoiceForLanguage = (language: string): string => {
+  const voiceMap: { [key: string]: string } = {
+    'English': 'coral',
+    'Spanish': 'nova',
+    'French': 'shimmer',
+    'German': 'echo',
+    'Italian': 'nova',
+    'Portuguese': 'coral',
+    'Russian': 'onyx',
+    'Chinese': 'nova',
+    'Japanese': 'shimmer',
+    'Korean': 'nova',
+    'Arabic': 'onyx',
   };
-  return langMap[language] || language.toLowerCase().substring(0, 2);
+  return voiceMap[language] || 'coral';
 };
 
 export default function StoryScreen() {
@@ -63,11 +63,22 @@ export default function StoryScreen() {
   const { colors, isDarkMode } = useTheme();
   const { t } = useLocalization();
 
+  // Story state
   const [story, setStory] = useState<Story | null>(null);
   const [savedWords, setSavedWords] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
+
+  // Audio state
+  const [sound, setSound] = useState<Audio.Sound | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
+  const [audioLoaded, setAudioLoaded] = useState(false);
+  const [duration, setDuration] = useState(0);
+  const [position, setPosition] = useState(0);
   const [playbackSpeed, setPlaybackSpeed] = useState(1.0);
+
+  // Animation for the progress bar
+  const progressAnim = useRef(new Animated.Value(0)).current;
 
   // Word modal state
   const [selectedWord, setSelectedWord] = useState<string | null>(null);
@@ -76,7 +87,23 @@ export default function StoryScreen() {
   const [isTranslating, setIsTranslating] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
 
-  const speedOptions = [0.5, 0.75, 1.0, 1.25, 1.5];
+  const speedOptions = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0];
+
+  // Setup audio mode
+  useEffect(() => {
+    Audio.setAudioModeAsync({
+      allowsRecordingIOS: false,
+      playsInSilentModeIOS: true,
+      staysActiveInBackground: true,
+      shouldDuckAndroid: true,
+    });
+
+    return () => {
+      if (sound) {
+        sound.unloadAsync();
+      }
+    };
+  }, []);
 
   const loadStory = async () => {
     if (!id || !user) return;
@@ -100,40 +127,120 @@ export default function StoryScreen() {
 
   useEffect(() => {
     loadStory();
-    
-    return () => {
-      Speech.stop();
-    };
   }, [id, user]);
 
-  const handlePlayPause = async () => {
-    if (!story) return;
+  // Generate and load audio
+  const generateAudio = async () => {
+    if (!story || isGeneratingAudio || audioLoaded) return;
 
-    if (isPlaying) {
-      await Speech.stop();
-      setIsPlaying(false);
-    } else {
-      setIsPlaying(true);
-      const langCode = getLanguageCode(story.language);
-      await Speech.speak(story.content, {
-        language: langCode,
-        rate: playbackSpeed * 0.85, // Slightly slower for learning
-        pitch: 1.0,
-        onDone: () => setIsPlaying(false),
-        onError: () => setIsPlaying(false),
-      });
+    setIsGeneratingAudio(true);
+    try {
+      const voice = getVoiceForLanguage(story.language);
+      const response = await ttsApi.generate(story.content, voice, 1.0);
+      
+      if (response.data.audio_base64) {
+        // Save to temporary file
+        const audioUri = FileSystem.cacheDirectory + `story_${story.id}.mp3`;
+        await FileSystem.writeAsStringAsync(audioUri, response.data.audio_base64, {
+          encoding: FileSystem.EncodingType.Base64,
+        });
+
+        // Load the sound
+        const { sound: newSound } = await Audio.Sound.createAsync(
+          { uri: audioUri },
+          { shouldPlay: false },
+          onPlaybackStatusUpdate
+        );
+        
+        setSound(newSound);
+        setAudioLoaded(true);
+      }
+    } catch (error) {
+      console.error('Failed to generate audio:', error);
+    } finally {
+      setIsGeneratingAudio(false);
     }
   };
 
-  const handleSpeedChange = () => {
+  const onPlaybackStatusUpdate = useCallback((status: any) => {
+    if (status.isLoaded) {
+      setDuration(status.durationMillis || 0);
+      setPosition(status.positionMillis || 0);
+      setIsPlaying(status.isPlaying);
+      
+      // Update progress animation
+      if (status.durationMillis > 0) {
+        const progress = status.positionMillis / status.durationMillis;
+        progressAnim.setValue(progress);
+      }
+      
+      if (status.didJustFinish) {
+        setIsPlaying(false);
+        setPosition(0);
+        progressAnim.setValue(0);
+      }
+    }
+  }, []);
+
+  const handlePlayPause = async () => {
+    if (!audioLoaded) {
+      await generateAudio();
+      return;
+    }
+
+    if (!sound) return;
+
+    if (isPlaying) {
+      await sound.pauseAsync();
+    } else {
+      await sound.playAsync();
+    }
+  };
+
+  const handleSeek = async (percentage: number) => {
+    if (!sound || !duration) return;
+    const newPosition = percentage * duration;
+    await sound.setPositionAsync(newPosition);
+  };
+
+  const handleSkipBack = async () => {
+    if (!sound) return;
+    const newPosition = Math.max(0, position - 10000); // Skip back 10 seconds
+    await sound.setPositionAsync(newPosition);
+  };
+
+  const handleSkipForward = async () => {
+    if (!sound) return;
+    const newPosition = Math.min(duration, position + 10000); // Skip forward 10 seconds
+    await sound.setPositionAsync(newPosition);
+  };
+
+  const handleSpeedChange = async () => {
     const currentIndex = speedOptions.indexOf(playbackSpeed);
     const nextIndex = (currentIndex + 1) % speedOptions.length;
-    setPlaybackSpeed(speedOptions[nextIndex]);
+    const newSpeed = speedOptions[nextIndex];
+    setPlaybackSpeed(newSpeed);
+    
+    if (sound) {
+      await sound.setRateAsync(newSpeed, true);
+    }
+  };
+
+  const formatTime = (millis: number): string => {
+    const totalSeconds = Math.floor(millis / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
   const handleWordPress = async (word: string, sentence: string) => {
     const cleanWord = word.replace(/[^\p{L}\p{M}'-]/gu, '');
     if (!cleanWord) return;
+
+    // Pause audio when tapping a word
+    if (sound && isPlaying) {
+      await sound.pauseAsync();
+    }
 
     setSelectedWord(cleanWord);
     setSelectedSentence(sentence);
@@ -207,7 +314,7 @@ export default function StoryScreen() {
           style={[
             styles.word,
             { color: colors.textPrimary },
-            isSaved && [styles.savedWord, { backgroundColor: `${colors.accent}20`, borderBottomColor: colors.accent }],
+            isSaved && [styles.savedWord, { backgroundColor: `${colors.accent}25`, borderBottomColor: colors.accent }],
           ]}
         >
           {word.replace(/[^\p{L}\p{M}'-]/gu, '')}
@@ -254,18 +361,16 @@ export default function StoryScreen() {
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       {/* Header */}
-      <View style={[styles.header, { borderBottomColor: colors.border, backgroundColor: colors.white }]}>
+      <View style={[styles.header, { backgroundColor: colors.white, borderBottomColor: colors.borderLight }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.headerButton}>
-          <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
+          <Ionicons name="chevron-down" size={28} color={colors.textPrimary} />
         </TouchableOpacity>
         <View style={styles.headerInfo}>
+          <Text style={[styles.headerSubtitle, { color: colors.textMuted }]}>READING</Text>
           <Text style={[styles.headerTitle, { color: colors.textPrimary }]} numberOfLines={1}>
             {story.title}
-          </Text>
-          <Text style={[styles.headerMeta, { color: colors.textSecondary }]}>
-            {story.language.toUpperCase()} / {story.level.toUpperCase()}
           </Text>
         </View>
         <TouchableOpacity onPress={handleShare} style={styles.headerButton}>
@@ -273,33 +378,25 @@ export default function StoryScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Audio Controls */}
-      <View style={[styles.audioControls, { backgroundColor: isDarkMode ? colors.white : colors.black }]}>
-        <TouchableOpacity 
-          onPress={handlePlayPause} 
-          style={[styles.playButton, { backgroundColor: colors.accent }]}
-        >
-          <Ionicons
-            name={isPlaying ? 'pause' : 'play'}
-            size={28}
-            color="#FFFFFF"
-          />
-        </TouchableOpacity>
-        <View style={styles.audioInfo}>
-          <Text style={[styles.audioTitle, { color: isDarkMode ? colors.textPrimary : '#FFFFFF' }]}>
-            {isPlaying ? 'NOW PLAYING' : 'TEXT-TO-SPEECH'}
-          </Text>
-          <Text style={[styles.audioSubtitle, { color: isDarkMode ? colors.textMuted : '#AAAAAA' }]}>TAP TO LISTEN</Text>
+      {/* Language & Level Badge */}
+      <View style={[styles.badgeContainer, { backgroundColor: colors.white }]}>
+        <View style={[styles.badge, { backgroundColor: colors.accent }]}>
+          <Text style={styles.badgeText}>{story.language.toUpperCase()}</Text>
         </View>
-        <TouchableOpacity onPress={handleSpeedChange} style={[styles.speedButton, { backgroundColor: colors.accent }]}>
-          <Text style={styles.speedText}>{playbackSpeed}x</Text>
-        </TouchableOpacity>
+        <View style={[styles.badge, { backgroundColor: isDarkMode ? colors.borderLight : '#E8E8E8' }]}>
+          <Text style={[styles.badgeText, { color: colors.textPrimary }]}>{story.level.toUpperCase()}</Text>
+        </View>
+        <View style={[styles.badge, { backgroundColor: isDarkMode ? colors.borderLight : '#E8E8E8' }]}>
+          <Text style={[styles.badgeText, { color: colors.textPrimary }]}>{story.topic.toUpperCase()}</Text>
+        </View>
       </View>
 
-      {/* Instruction */}
-      <View style={[styles.instructionBar, { backgroundColor: colors.white, borderBottomColor: colors.borderLight }]}>
-        <Ionicons name="finger-print" size={16} color={colors.accent} />
-        <Text style={[styles.instructionText, { color: colors.textSecondary }]}>TAP ANY WORD TO TRANSLATE</Text>
+      {/* Tip Banner */}
+      <View style={[styles.tipBanner, { backgroundColor: isDarkMode ? colors.white : '#FFF8F0', borderColor: colors.accent }]}>
+        <Ionicons name="hand-left-outline" size={18} color={colors.accent} />
+        <Text style={[styles.tipText, { color: colors.textSecondary }]}>
+          Tap any word to translate & save it
+        </Text>
       </View>
 
       {/* Story Content */}
@@ -307,10 +404,113 @@ export default function StoryScreen() {
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
       >
-        <View style={[styles.storyContent, { backgroundColor: colors.white, borderColor: colors.border }]}>
+        <View style={[styles.storyContent, { backgroundColor: colors.white }]}>
           {renderContent()}
         </View>
+        {/* Add padding for audio player */}
+        <View style={{ height: 180 }} />
       </ScrollView>
+
+      {/* Audio Player - Spotify Style */}
+      <View style={[styles.audioPlayer, { backgroundColor: isDarkMode ? '#1A1A1A' : '#282828' }]}>
+        {/* Progress Bar */}
+        <View style={styles.progressContainer}>
+          <TouchableOpacity 
+            style={styles.progressBarTouch}
+            onPress={(e) => {
+              const { locationX } = e.nativeEvent;
+              const percentage = locationX / (SCREEN_WIDTH - 32);
+              handleSeek(percentage);
+            }}
+          >
+            <View style={[styles.progressBar, { backgroundColor: '#4A4A4A' }]}>
+              <Animated.View 
+                style={[
+                  styles.progressFill, 
+                  { 
+                    backgroundColor: colors.accent,
+                    width: progressAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: ['0%', '100%'],
+                    })
+                  }
+                ]} 
+              />
+              <Animated.View 
+                style={[
+                  styles.progressDot,
+                  { 
+                    backgroundColor: '#FFFFFF',
+                    left: progressAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: ['0%', '100%'],
+                    })
+                  }
+                ]} 
+              />
+            </View>
+          </TouchableOpacity>
+          <View style={styles.timeContainer}>
+            <Text style={styles.timeText}>{formatTime(position)}</Text>
+            <Text style={styles.timeText}>{formatTime(duration)}</Text>
+          </View>
+        </View>
+
+        {/* Now Playing Info */}
+        <View style={styles.nowPlayingInfo}>
+          <View style={[styles.albumArt, { backgroundColor: colors.accent }]}>
+            <Ionicons name="book" size={24} color="#FFFFFF" />
+          </View>
+          <View style={styles.trackInfo}>
+            <Text style={styles.trackTitle} numberOfLines={1}>{story.title}</Text>
+            <Text style={styles.trackArtist}>{story.language} Story • {story.level}</Text>
+          </View>
+          <TouchableOpacity onPress={handleSpeedChange} style={styles.speedBadge}>
+            <Text style={styles.speedBadgeText}>{playbackSpeed}x</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Controls */}
+        <View style={styles.controlsContainer}>
+          <TouchableOpacity style={styles.controlButton} onPress={handleSkipBack}>
+            <Ionicons name="play-back" size={24} color="#FFFFFF" />
+            <Text style={styles.skipText}>10</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={[styles.playPauseButton, { backgroundColor: colors.accent }]} 
+            onPress={handlePlayPause}
+            disabled={isGeneratingAudio}
+          >
+            {isGeneratingAudio ? (
+              <ActivityIndicator size="small" color="#FFFFFF" />
+            ) : (
+              <Ionicons 
+                name={isPlaying ? 'pause' : 'play'} 
+                size={32} 
+                color="#FFFFFF" 
+                style={!isPlaying ? { marginLeft: 4 } : undefined}
+              />
+            )}
+          </TouchableOpacity>
+          
+          <TouchableOpacity style={styles.controlButton} onPress={handleSkipForward}>
+            <Ionicons name="play-forward" size={24} color="#FFFFFF" />
+            <Text style={styles.skipText}>10</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Audio Status */}
+        {isGeneratingAudio && (
+          <View style={styles.statusContainer}>
+            <ActivityIndicator size="small" color={colors.accent} />
+            <Text style={styles.statusText}>Generating audio with AI...</Text>
+          </View>
+        )}
+        {!audioLoaded && !isGeneratingAudio && (
+          <Text style={styles.statusText}>Tap play to generate audio</Text>
+        )}
+      </View>
 
       {/* Word Modal */}
       <WordModal
@@ -341,8 +541,8 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: SPACING.md,
     fontSize: FONT_SIZES.sm,
-    fontWeight: '700',
-    letterSpacing: 2,
+    fontWeight: '600',
+    letterSpacing: 1,
   },
   errorContainer: {
     flex: 1,
@@ -352,22 +552,21 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: FONT_SIZES.lg,
-    fontWeight: '900',
+    fontWeight: '700',
     marginTop: SPACING.md,
-    letterSpacing: 2,
+    letterSpacing: 1,
   },
   backLink: {
     fontSize: FONT_SIZES.sm,
     marginTop: SPACING.md,
-    fontWeight: '700',
-    letterSpacing: 1,
+    fontWeight: '600',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: SPACING.sm,
     paddingVertical: SPACING.md,
-    borderBottomWidth: 3,
+    borderBottomWidth: 1,
   },
   headerButton: {
     width: 44,
@@ -379,72 +578,56 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
   },
+  headerSubtitle: {
+    fontSize: FONT_SIZES.xs,
+    fontWeight: '600',
+    letterSpacing: 2,
+    marginBottom: 2,
+  },
   headerTitle: {
     fontSize: FONT_SIZES.md,
-    fontWeight: '900',
-    letterSpacing: 1,
-  },
-  headerMeta: {
-    fontSize: FONT_SIZES.xs,
-    marginTop: 2,
-    fontWeight: '600',
-    letterSpacing: 1,
-  },
-  audioControls: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: SPACING.md,
-    gap: SPACING.md,
-  },
-  playButton: {
-    width: 56,
-    height: 56,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  audioInfo: {
-    flex: 1,
-  },
-  audioTitle: {
-    fontSize: FONT_SIZES.sm,
     fontWeight: '700',
-    letterSpacing: 1,
   },
-  audioSubtitle: {
-    fontSize: FONT_SIZES.xs,
-    fontWeight: '600',
-    letterSpacing: 1,
+  badgeContainer: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
   },
-  speedButton: {
+  badge: {
     paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: 16,
   },
-  speedText: {
-    fontSize: FONT_SIZES.sm,
+  badgeText: {
+    fontSize: FONT_SIZES.xs,
     fontWeight: '700',
     color: '#FFFFFF',
-    letterSpacing: 1,
+    letterSpacing: 0.5,
   },
-  instructionBar: {
+  tipBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
     gap: SPACING.sm,
-    paddingVertical: SPACING.sm,
-    borderBottomWidth: 2,
+    marginHorizontal: SPACING.lg,
+    marginBottom: SPACING.md,
+    padding: SPACING.md,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderLeftWidth: 4,
   },
-  instructionText: {
-    fontSize: FONT_SIZES.xs,
-    fontWeight: '700',
-    letterSpacing: 1,
+  tipText: {
+    fontSize: FONT_SIZES.sm,
+    fontWeight: '500',
+    flex: 1,
   },
   contentContainer: {
     padding: SPACING.lg,
-    paddingBottom: SPACING.xxl,
+    paddingTop: 0,
   },
   storyContent: {
-    padding: SPACING.lg,
-    borderWidth: 2,
+    padding: SPACING.xl,
+    borderRadius: 16,
     ...SHADOWS.sm,
   },
   sentenceContainer: {
@@ -453,11 +636,139 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.sm,
   },
   word: {
-    fontSize: FONT_SIZES.lg,
+    fontSize: 18,
     lineHeight: 32,
   },
   savedWord: {
     borderBottomWidth: 2,
+    borderRadius: 4,
+    paddingHorizontal: 2,
   },
   punctuation: {},
+  
+  // Audio Player Styles - Spotify-like
+  audioPlayer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: SPACING.lg,
+    paddingTop: SPACING.md,
+    paddingBottom: SPACING.xl,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    ...SHADOWS.lg,
+  },
+  progressContainer: {
+    marginBottom: SPACING.md,
+  },
+  progressBarTouch: {
+    paddingVertical: 8,
+  },
+  progressBar: {
+    height: 4,
+    borderRadius: 2,
+    overflow: 'visible',
+    position: 'relative',
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 2,
+  },
+  progressDot: {
+    position: 'absolute',
+    top: -4,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginLeft: -6,
+  },
+  timeContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: SPACING.xs,
+  },
+  timeText: {
+    fontSize: FONT_SIZES.xs,
+    color: '#AAAAAA',
+    fontWeight: '500',
+  },
+  nowPlayingInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
+    marginBottom: SPACING.md,
+  },
+  albumArt: {
+    width: 48,
+    height: 48,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  trackInfo: {
+    flex: 1,
+  },
+  trackTitle: {
+    fontSize: FONT_SIZES.md,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 2,
+  },
+  trackArtist: {
+    fontSize: FONT_SIZES.sm,
+    color: '#AAAAAA',
+  },
+  speedBadge: {
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.xs,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#4A4A4A',
+  },
+  speedBadgeText: {
+    fontSize: FONT_SIZES.sm,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  controlsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.xl,
+  },
+  controlButton: {
+    width: 50,
+    height: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  skipText: {
+    position: 'absolute',
+    bottom: 2,
+    fontSize: 10,
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  playPauseButton: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  statusContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.sm,
+    marginTop: SPACING.sm,
+  },
+  statusText: {
+    fontSize: FONT_SIZES.xs,
+    color: '#888888',
+    textAlign: 'center',
+    marginTop: SPACING.xs,
+  },
 });
