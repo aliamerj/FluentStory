@@ -140,8 +140,9 @@ class FeedbackResponse(BaseModel):
 
 class TTSRequest(BaseModel):
     text: str
-    voice: str = "alloy"  # alloy, echo, fable, onyx, nova, shimmer
+    voice: str = "coral"  # alloy, ash, ballad, coral, echo, fable, onyx, nova, sage, shimmer, verse
     speed: float = 1.0
+    language: str = "en"  # Language hint for better pronunciation
 
 # ============= HELPER FUNCTIONS =============
 
