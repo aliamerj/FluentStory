@@ -697,9 +697,9 @@ async def get_user_feedback(user_id: str, limit: int = 50):
 
 @api_router.post("/tts/generate")
 async def generate_tts(request: TTSRequest):
-    """Generate natural-sounding speech using OpenAI TTS"""
+    """Generate natural-sounding speech using OpenAI TTS gpt-4o-mini-tts"""
     try:
-        async with httpx.AsyncClient(timeout=60.0) as client:
+        async with httpx.AsyncClient(timeout=120.0) as client:
             response = await client.post(
                 "https://api.openai.com/v1/audio/speech",
                 headers={
@@ -707,7 +707,7 @@ async def generate_tts(request: TTSRequest):
                     "Content-Type": "application/json",
                 },
                 json={
-                    "model": "tts-1",
+                    "model": "gpt-4o-mini-tts",
                     "input": request.text,
                     "voice": request.voice,
                     "speed": request.speed,
@@ -723,7 +723,8 @@ async def generate_tts(request: TTSRequest):
             audio_b64 = base64.b64encode(response.content).decode()
             return {
                 "audio_base64": audio_b64,
-                "format": "mp3"
+                "format": "mp3",
+                "duration_estimate": len(request.text) / 15  # Rough estimate: ~15 chars per second
             }
     except httpx.TimeoutException:
         raise HTTPException(status_code=504, detail="TTS generation timed out")
