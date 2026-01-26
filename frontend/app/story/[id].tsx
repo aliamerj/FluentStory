@@ -106,18 +106,23 @@ export default function StoryScreen() {
   }, []);
 
   const loadStory = async () => {
-    if (!id || !user) return;
+    if (!id) return;
 
     try {
-      const [storyRes, wordsRes] = await Promise.all([
-        storyApi.getOne(id as string),
-        wordApi.getAll(user.id),
-      ]);
-
+      // Always try to load the story
+      const storyRes = await storyApi.getOne(id as string);
       setStory(storyRes.data);
       
-      const savedSet = new Set(wordsRes.data.map((w: SavedWord) => w.word.toLowerCase()));
-      setSavedWords(savedSet);
+      // Only load saved words if user is logged in
+      if (user) {
+        try {
+          const wordsRes = await wordApi.getAll(user.id);
+          const savedSet = new Set(wordsRes.data.map((w: SavedWord) => w.word.toLowerCase()));
+          setSavedWords(savedSet);
+        } catch (e) {
+          console.log('Could not load saved words');
+        }
+      }
     } catch (error) {
       console.error('Failed to load story:', error);
     } finally {
@@ -127,7 +132,7 @@ export default function StoryScreen() {
 
   useEffect(() => {
     loadStory();
-  }, [id, user]);
+  }, [id]);
 
   // Generate and load audio
   const generateAudio = async () => {
